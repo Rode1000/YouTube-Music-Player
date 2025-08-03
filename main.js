@@ -3,11 +3,194 @@ const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require('path');
+const fs = require('fs').promises;
+const os = require('os');
 
 let snfe;
 let mainWindow;
 
-// Handle startup settings
+// Single instance lock
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
+// Cache settings
+const CACHE_DIR = path.join(os.tmpdir(), 'ytmp-filters');
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+const filterLists = [
+  {
+    name: "easylist",
+    url: "https://easylist.to/easylist/easylist.txt",
+    description: "EasyList (Ad blocking)",
+  },
+  {
+    name: "easyprivacy",
+    url: "https://easylist.to/easylist/easyprivacy.txt",
+    description: "EasyPrivacy (Privacy protection)",
+  },
+  {
+    name: "ublock-filters",
+    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+    description: "uBlock filters (Enhanced ad blocking)",
+  },
+  {
+    name: "ublock-privacy",
+    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+    description: "uBlock Privacy filters",
+  },
+  {
+    name: "ublock-badware",
+    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
+    description: "uBlock Badware protection",
+  },
+];
+
+async function ensureCacheDir() {
+  try {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+  } catch (error) {
+    console.log('Error creating cache directory:', error.message);
+  }
+}
+
+function getCacheFilePath(filterName) {
+  return path.join(CACHE_DIR, `${filterName}.txt`);
+}
+
+function getCacheMetaPath(filterName) {
+  return path.join(CACHE_DIR, `${filterName}.meta.json`);
+}
+
+// Check if cache is still valid (less than 24 hours old)
+async function isCacheValid(filterName) {
+  try {
+    const metaPath = getCacheMetaPath(filterName);
+    const metaData = await fs.readFile(metaPath, 'utf8');
+    const { timestamp } = JSON.parse(metaData);
+    return (Date.now() - timestamp) < CACHE_DURATION;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function loadFromCache(filterName) {
+  try {
+    const cacheFilePath = getCacheFilePath(filterName);
+    const content = await fs.readFile(cacheFilePath, 'utf8');
+    return content;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function saveToCache(filterName, content) {
+  try {
+    const cacheFilePath = getCacheFilePath(filterName);
+    const metaPath = getCacheMetaPath(filterName);
+    
+    await fs.writeFile(cacheFilePath, content, 'utf8');
+    await fs.writeFile(metaPath, JSON.stringify({ 
+      timestamp: Date.now(),
+      filterName 
+    }), 'utf8');
+    
+    console.log(`✓ ${filterName} cached`);
+  } catch (error) {
+    console.log(`✗ Error caching ${filterName}:`, error.message);
+  }
+}
+
+async function downloadFilter(filterList) {
+  try {
+    console.log(`Downloading ${filterList.description}...`);
+    const response = await fetch(filterList.url);
+    if (response.ok) {
+      const content = await response.text();
+      await saveToCache(filterList.name, content);
+      console.log(`✓ ${filterList.description} downloaded`);
+      return content;
+    } else {
+      console.log(`✗ Failed to download ${filterList.description}: ${response.status}`);
+      return null;
+    }
+  } catch (error) {
+    console.log(`✗ Error downloading ${filterList.description}:`, error.message);
+    return null;
+  }
+}
+
+// Load from cache or download if expired/missing
+async function loadFilter(filterList, forceUpdate = false) {
+  if (!forceUpdate && await isCacheValid(filterList.name)) {
+    console.log(`Loading ${filterList.description} from cache...`);
+    const cachedContent = await loadFromCache(filterList.name);
+    if (cachedContent) {
+      console.log(`✓ ${filterList.description} loaded from cache`);
+      return cachedContent;
+    }
+  }
+  
+  return await downloadFilter(filterList);
+}
+
+// Load all filters in parallel
+async function loadAllFilters(forceUpdate = false) {
+  await ensureCacheDir();
+  
+  console.log(forceUpdate ? "Force updating filters..." : "Loading filters...");
+  
+  const filterPromises = filterLists.map(filterList => 
+    loadFilter(filterList, forceUpdate).then(content => 
+      content ? { name: filterList.name, raw: content } : null
+    )
+  );
+  
+  const results = await Promise.all(filterPromises);
+  const validFilters = results.filter(result => result !== null);
+  
+  if (validFilters.length > 0) {
+    console.log(`Filter loading complete! ${validFilters.length}/${filterLists.length} lists loaded`);
+  } else {
+    console.log("Warning: No filter lists loaded");
+  }
+  
+  return validFilters;
+}
+
+async function initializeFilterEngine(forceUpdate = false) {
+  try {
+    if (!snfe) {
+      snfe = await StaticNetFilteringEngine.create();
+    }
+    
+    const lists = await loadAllFilters(forceUpdate);
+    
+    if (lists.length > 0) {
+      await snfe.useLists(lists);
+      console.log(`Filter engine ready with ${lists.length} lists!`);
+      
+      if (mainWindow) {
+        createMenu();
+      }
+    }
+    
+    return lists.length > 0;
+  } catch (error) {
+    console.log('Error initializing filter engine:', error.message);
+    return false;
+  }
+}
+
 function handleStartupSettings() {
   const args = process.argv.slice(1);
   
@@ -26,12 +209,10 @@ function handleStartupSettings() {
     console.log('✓ Startup disabled');
   }
   
-  // Check current startup status
   const loginItemSettings = app.getLoginItemSettings();
   console.log(`Startup status: ${loginItemSettings.openAtLogin ? 'Enabled' : 'Disabled'}`);
 }
 
-// Create application menu with startup toggle
 function createMenu() {
   const loginItemSettings = app.getLoginItemSettings();
   
@@ -53,6 +234,20 @@ function createMenu() {
         },
         { type: 'separator' },
         {
+          label: 'Update Ad Filters',
+          click: async () => {
+            console.log('Manually updating filters...');
+            const success = await initializeFilterEngine(true);
+            console.log(success ? 'Filters updated!' : 'Filter update failed');
+            
+            // Restart to apply updated filters
+            console.log('Restarting...');
+            app.relaunch();
+            app.exit();
+          }
+        },
+        { type: 'separator' },
+        {
           label: 'Quit',
           accelerator: 'Ctrl+Q',
           click: () => {
@@ -68,6 +263,7 @@ function createMenu() {
 }
 
 async function createWindow() {
+  // Resource types to block
   const blockableResourceTypes = {
     script: true,
     stylesheet: false,
@@ -85,65 +281,7 @@ async function createWindow() {
     sub_frame: true,
   };
 
-  snfe = await StaticNetFilteringEngine.create();
-  console.log("Loading filter lists...");
-
-  const filterLists = [
-    {
-      name: "easylist",
-      url: "https://easylist.to/easylist/easylist.txt",
-      description: "EasyList (Ad blocking)",
-    },
-    {
-      name: "easyprivacy",
-      url: "https://easylist.to/easylist/easyprivacy.txt",
-      description: "EasyPrivacy (Privacy protection)",
-    },
-    {
-      name: "ublock-filters",
-      url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
-      description: "uBlock filters (Enhanced ad blocking)",
-    },
-    {
-      name: "ublock-privacy",
-      url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
-      description: "uBlock Privacy filters",
-    },
-    {
-      name: "ublock-badware",
-      url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
-      description: "uBlock Badware protection",
-    },
-  ];
-
-  const lists = [];
-  for (const filterList of filterLists) {
-    try {
-      console.log(`Loading ${filterList.description}...`);
-      const response = await fetch(filterList.url);
-      if (response.ok) {
-        const content = await response.text();
-        lists.push({ name: filterList.name, raw: content });
-        console.log(`✓ ${filterList.description} loaded successfully`);
-      } else {
-        console.log(
-          `✗ Failed to load ${filterList.description}: ${response.status}`
-        );
-      }
-    } catch (error) {
-      console.log(`✗ Error loading ${filterList.description}:`, error.message);
-    }
-  }
-
-  if (lists.length > 0) {
-    await snfe.useLists(lists);
-    console.log(
-      `Filter engine ready with ${lists.length} filter lists loaded!`
-    );
-  } else {
-    console.log("Warning: No filter lists were loaded successfully");
-  }
-
+  // Create window immediately for fast startup
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -156,10 +294,19 @@ async function createWindow() {
     },
   });
 
-  // Create menu after window is created
   createMenu();
 
+  // Initialize filters in background
+  initializeFilterEngine().then((success) => {
+    console.log(success ? '✓ Ad blocking active' : '⚠ Ad blocking failed');
+  });
+
+  // Request blocker
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    if (!snfe) {
+      return callback({});
+    }
+    
     const resourceType = details.resourceType;
     const shouldCheckFilters = blockableResourceTypes[resourceType];
 
@@ -198,6 +345,7 @@ async function createWindow() {
     callback({});
   });
 
+  // Pause audio/video on close
   mainWindow.on('close', async (event) => {
     event.preventDefault();
     
@@ -227,10 +375,9 @@ async function createWindow() {
 
   mainWindow.loadURL("https://music.youtube.com");
   
-  // Hide cast/connect device icons after page loads
+  // Hide cast buttons after page loads
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.webContents.insertCSS(`
-      /* Hide Google Cast / Connect to device button */
       .ytmusic-player-bar .middle-controls [aria-label*="cast" i],
       .ytmusic-player-bar .middle-controls [aria-label*="connect" i],
       ytmusic-menu-service-item-renderer[aria-label*="connect" i],
@@ -242,10 +389,8 @@ async function createWindow() {
       [data-title*="Connect"],
       button[aria-label*="Connect to a device"],
       button[aria-label*="Cast"],
-      /* Hide cast icon in header area */
       .ytmusic-nav-bar [role="button"][aria-label*="cast" i],
       .ytmusic-nav-bar [role="button"][aria-label*="connect" i],
-      /* Hide cast menu items */
       .ytmusic-menu-service-item-renderer:has([aria-label*="cast" i]),
       .ytmusic-menu-service-item-renderer:has([aria-label*="connect" i])
       {
@@ -253,23 +398,24 @@ async function createWindow() {
         visibility: hidden !important;
       }
     `);
-    console.log('✓ Cast/connect device icons hidden');
+    console.log('✓ Cast buttons hidden');
   });
 }
 
-// Handle startup settings on app start
 handleStartupSettings();
 
-app.whenReady().then(createWindow);
+if (gotTheLock) {
+  app.whenReady().then(createWindow);
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
 
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+}
