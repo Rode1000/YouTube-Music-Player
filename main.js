@@ -1,46 +1,60 @@
-const { app, BrowserWindow, session } = require('electron');
-const { StaticNetFilteringEngine } = require('@gorhill/ubo-core');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { app, BrowserWindow, session } = require("electron");
+const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 let snfe;
 let mainWindow;
 
 async function createWindow() {
-  // Setup uBO-core
-  snfe = await StaticNetFilteringEngine.create();
+  const blockableResourceTypes = {
+    script: true,
+    stylesheet: false,
+    image: true,
+    font: false,
+    xhr: true,
+    fetch: true,
+    websocket: false,
+    media: false,
+    object: true,
+    ping: true,
+    csp_report: true,
+    preflight: false,
+    navigation: false,
+    sub_frame: true,
+  };
 
-  console.log('Loading filter lists...');
-  
-  // Define filter lists to load
+  snfe = await StaticNetFilteringEngine.create();
+  console.log("Loading filter lists...");
+
   const filterLists = [
     {
-      name: 'easylist',
-      url: 'https://easylist.to/easylist/easylist.txt',
-      description: 'EasyList (Ad blocking)'
+      name: "easylist",
+      url: "https://easylist.to/easylist/easylist.txt",
+      description: "EasyList (Ad blocking)",
     },
     {
-      name: 'easyprivacy',
-      url: 'https://easylist.to/easylist/easyprivacy.txt',
-      description: 'EasyPrivacy (Privacy protection)'
+      name: "easyprivacy",
+      url: "https://easylist.to/easylist/easyprivacy.txt",
+      description: "EasyPrivacy (Privacy protection)",
     },
     {
-      name: 'ublock-filters',
-      url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt',
-      description: 'uBlock filters (Enhanced ad blocking)'
+      name: "ublock-filters",
+      url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+      description: "uBlock filters (Enhanced ad blocking)",
     },
     {
-      name: 'ublock-privacy',
-      url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt',
-      description: 'uBlock Privacy filters'
+      name: "ublock-privacy",
+      url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+      description: "uBlock Privacy filters",
     },
     {
-      name: 'ublock-badware',
-      url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt',
-      description: 'uBlock Badware protection'
-    }
+      name: "ublock-badware",
+      url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
+      description: "uBlock Badware protection",
+    },
   ];
 
-  // Load all filter lists
   const lists = [];
   for (const filterList of filterLists) {
     try {
@@ -51,63 +65,84 @@ async function createWindow() {
         lists.push({ name: filterList.name, raw: content });
         console.log(`✓ ${filterList.description} loaded successfully`);
       } else {
-        console.log(`✗ Failed to load ${filterList.description}: ${response.status}`);
+        console.log(
+          `✗ Failed to load ${filterList.description}: ${response.status}`
+        );
       }
     } catch (error) {
       console.log(`✗ Error loading ${filterList.description}:`, error.message);
     }
   }
 
-  // Apply all loaded filter lists
   if (lists.length > 0) {
     await snfe.useLists(lists);
-    console.log(`Filter engine ready with ${lists.length} filter lists loaded!`);
+    console.log(
+      `Filter engine ready with ${lists.length} filter lists loaded!`
+    );
   } else {
-    console.log('Warning: No filter lists were loaded successfully');
+    console.log("Warning: No filter lists were loaded successfully");
   }
 
-  // Create browser window
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     autoHideMenuBar: true,
     webPreferences: {
-      nodeIntegration: false, // safer
+      nodeIntegration: false,
     },
   });
 
-  // Intercept & block requests
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    const resourceType = details.resourceType;
+    const shouldCheckFilters = blockableResourceTypes[resourceType];
+
+    if (!shouldCheckFilters) {
+      return callback({});
+    }
+
+    const resourceTypeMapping = {
+      script: "script",
+      stylesheet: "stylesheet",
+      image: "image",
+      font: "font",
+      xhr: "xmlhttprequest",
+      fetch: "fetch",
+      websocket: "websocket",
+      media: "media",
+      object: "object",
+      ping: "ping",
+      csp_report: "csp_report",
+      sub_frame: "sub_frame",
+    };
+
+    const uBlockType = resourceTypeMapping[resourceType] || "other";
+
     const shouldBlock = snfe.matchRequest({
       originURL: details.referrer || details.url,
       url: details.url,
-      type: 'script',
+      type: uBlockType,
     });
 
     if (shouldBlock !== 0) {
-      console.log('Blocked:', details.url);
+      console.log(`Blocked [${resourceType}]:`, details.url);
       return callback({ cancel: true });
     }
+
     callback({});
   });
 
-  // Handle window close event
   mainWindow.on('close', async (event) => {
+    event.preventDefault();
+    
     try {
-      // Pause the audio before closing
       await mainWindow.webContents.executeJavaScript(`
         try {
-          // Try to find and pause the audio player
           const audio = document.querySelector('audio');
           const video = document.querySelector('video');
           const playButton = document.querySelector('[data-testid="play-pause-button"], .play-pause-button, [aria-label*="pause" i], [title*="pause" i]');
           
-          if (audio && !audio.paused) {
-            audio.pause();
-          }
-          if (video && !video.paused) {
-            video.pause();
-          }
+          if (audio && !audio.paused) audio.pause();
+          if (video && !video.paused) video.pause();
           if (playButton && playButton.getAttribute('aria-label') && playButton.getAttribute('aria-label').toLowerCase().includes('pause')) {
             playButton.click();
           }
@@ -115,46 +150,27 @@ async function createWindow() {
           console.log('Could not pause audio:', e);
         }
       `);
+      
+      mainWindow.destroy();
     } catch (error) {
       console.log('Error pausing audio:', error);
+      mainWindow.destroy();
     }
   });
 
-  // Load YouTube Music
-  mainWindow.loadURL('https://music.youtube.com');
+  mainWindow.loadURL("https://music.youtube.com");
 }
 
-// Handle app events
 app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-app.on('activate', () => {
+app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
-  }
-});
-
-// Handle before-quit to ensure clean exit
-app.on('before-quit', async (event) => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    try {
-      await mainWindow.webContents.executeJavaScript(`
-        try {
-          const audio = document.querySelector('audio');
-          const video = document.querySelector('video');
-          if (audio) audio.pause();
-          if (video) video.pause();
-        } catch (e) {
-          console.log('Could not pause media:', e);
-        }
-      `);
-    } catch (error) {
-      console.log('Error in before-quit:', error);
-    }
   }
 });
