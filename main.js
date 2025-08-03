@@ -2,6 +2,7 @@ const { app, BrowserWindow, session, Menu } = require("electron");
 const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const path = require('path');
 
 let snfe;
 let mainWindow;
@@ -147,6 +148,9 @@ async function createWindow() {
     width: 1200,
     height: 800,
     autoHideMenuBar: false,
+    icon: process.platform === 'win32' 
+      ? path.join(__dirname, 'assets', 'icon.ico')
+      : path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       nodeIntegration: false,
     },
