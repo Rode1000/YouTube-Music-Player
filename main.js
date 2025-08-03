@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, Menu } = require("electron");
+const { app, BrowserWindow, session, Menu, Tray } = require("electron");
 const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -8,6 +8,10 @@ const os = require('os');
 
 let snfe;
 let mainWindow;
+let tray;
+let minimizeToTray = false;
+
+const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
 
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
@@ -18,14 +22,45 @@ if (!gotTheLock) {
   app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
       mainWindow.focus();
     }
   });
 }
 
-// Cache settings
+// Cache settings - 24 hour expiration
 const CACHE_DIR = path.join(os.tmpdir(), 'ytmp-filters');
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
+
+async function loadConfig() {
+  try {
+    const configData = await fs.readFile(CONFIG_FILE, 'utf8');
+    const config = JSON.parse(configData);
+    
+    minimizeToTray = config.minimizeToTray || false;
+    
+    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}`);
+    return config;
+  } catch (error) {
+    console.log('Using default config settings');
+    return {};
+  }
+}
+
+async function saveConfig() {
+  try {
+    const config = {
+      minimizeToTray: minimizeToTray
+    };
+    
+    await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
+    
+    console.log('Config saved');
+  } catch (error) {
+    console.log('Error saving config:', error.message);
+  }
+}
 
 const filterLists = [
   {
@@ -55,6 +90,70 @@ const filterLists = [
   },
 ];
 
+function createTray() {
+  if (tray) return;
+  
+  const iconPath = process.platform === 'win32' 
+    ? path.join(__dirname, 'assets', 'icon.ico')
+    : path.join(__dirname, 'assets', 'icon.png');
+    
+  tray = new Tray(iconPath);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show',
+      click: () => {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuiting = true;
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  tray.setToolTip('YouTube Music Player');
+  
+  // Double-click to show/hide
+  tray.on('double-click', () => {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+  
+  console.log('✓ System tray created');
+}
+
+function destroyTray() {
+  if (tray) {
+    tray.destroy();
+    tray = null;
+    console.log('✓ System tray removed');
+  }
+}
+
+function toggleTrayBehavior(enabled) {
+  minimizeToTray = enabled;
+  
+  if (enabled) {
+    createTray();
+  } else {
+    destroyTray();
+  }
+  
+  saveConfig();
+  createMenu();
+  console.log(`Minimize to tray: ${enabled ? 'Enabled' : 'Disabled'}`);
+}
+
 async function ensureCacheDir() {
   try {
     await fs.mkdir(CACHE_DIR, { recursive: true });
@@ -71,7 +170,7 @@ function getCacheMetaPath(filterName) {
   return path.join(CACHE_DIR, `${filterName}.meta.json`);
 }
 
-// Check if cache is still valid (less than 24 hours old)
+// Check if cache is still valid (24 hours)
 async function isCacheValid(filterName) {
   try {
     const metaPath = getCacheMetaPath(filterName);
@@ -129,7 +228,7 @@ async function downloadFilter(filterList) {
   }
 }
 
-// Load from cache or download if expired/missing
+// Try cache first, download if expired
 async function loadFilter(filterList, forceUpdate = false) {
   if (!forceUpdate && await isCacheValid(filterList.name)) {
     console.log(`Loading ${filterList.description} from cache...`);
@@ -234,13 +333,29 @@ function createMenu() {
         },
         { type: 'separator' },
         {
+          label: 'Minimize to System Tray',
+          type: 'checkbox',
+          checked: minimizeToTray,
+          click: (menuItem) => {
+            toggleTrayBehavior(menuItem.checked);
+          }
+        },
+        // Show tray option only when enabled
+        ...(minimizeToTray ? [{
+          label: 'Hide to Tray',
+          accelerator: 'Ctrl+H',
+          click: () => {
+            mainWindow.hide();
+          }
+        }] : []),
+        { type: 'separator' },
+        {
           label: 'Update Ad Filters',
           click: async () => {
             console.log('Manually updating filters...');
             const success = await initializeFilterEngine(true);
             console.log(success ? 'Filters updated!' : 'Filter update failed');
             
-            // Restart to apply updated filters
             console.log('Restarting...');
             app.relaunch();
             app.exit();
@@ -251,6 +366,7 @@ function createMenu() {
           label: 'Quit',
           accelerator: 'Ctrl+Q',
           click: () => {
+            app.isQuiting = true;
             app.quit();
           }
         }
@@ -263,7 +379,13 @@ function createMenu() {
 }
 
 async function createWindow() {
-  // Resource types to block
+  await loadConfig();
+  
+  if (minimizeToTray) {
+    createTray();
+  }
+
+  // Define what to block
   const blockableResourceTypes = {
     script: true,
     stylesheet: false,
@@ -281,7 +403,6 @@ async function createWindow() {
     sub_frame: true,
   };
 
-  // Create window immediately for fast startup
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -296,12 +417,12 @@ async function createWindow() {
 
   createMenu();
 
-  // Initialize filters in background
+  // Load filters in background
   initializeFilterEngine().then((success) => {
     console.log(success ? '✓ Ad blocking active' : '⚠ Ad blocking failed');
   });
 
-  // Request blocker
+  // Block requests based on filter engine
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     if (!snfe) {
       return callback({});
@@ -345,37 +466,56 @@ async function createWindow() {
     callback({});
   });
 
-  // Pause audio/video on close
+  // Handle close button based on tray setting
   mainWindow.on('close', async (event) => {
-    event.preventDefault();
-    
-    try {
-      await mainWindow.webContents.executeJavaScript(`
-        try {
-          const audio = document.querySelector('audio');
-          const video = document.querySelector('video');
-          const playButton = document.querySelector('[data-testid="play-pause-button"], .play-pause-button, [aria-label*="pause" i], [title*="pause" i]');
-          
-          if (audio && !audio.paused) audio.pause();
-          if (video && !video.paused) video.pause();
-          if (playButton && playButton.getAttribute('aria-label') && playButton.getAttribute('aria-label').toLowerCase().includes('pause')) {
-            playButton.click();
-          }
-        } catch (e) {
-          console.log('Could not pause audio:', e);
-        }
-      `);
+    if (!app.isQuiting && minimizeToTray) {
+      // Hide to tray, keep music playing
+      event.preventDefault();
+      mainWindow.hide();
+      console.log('App minimized to tray');
       
-      mainWindow.destroy();
-    } catch (error) {
-      console.log('Error pausing audio:', error);
-      mainWindow.destroy();
+      if (tray && !mainWindow.trayNotificationShown) {
+        tray.displayBalloon({
+          iconType: 'info',
+          title: 'YouTube Music',
+          content: 'App minimized to tray. Music continues playing.'
+        });
+        mainWindow.trayNotificationShown = true;
+      }
+    } else {
+      // Pause music and close
+      event.preventDefault();
+      
+      try {
+        await mainWindow.webContents.executeJavaScript(`
+          try {
+            const audio = document.querySelector('audio');
+            const video = document.querySelector('video');
+            const playButton = document.querySelector('[data-testid="play-pause-button"], .play-pause-button, [aria-label*="pause" i], [title*="pause" i]');
+            
+            if (audio && !audio.paused) audio.pause();
+            if (video && !video.paused) video.pause();
+            if (playButton && playButton.getAttribute('aria-label') && playButton.getAttribute('aria-label').toLowerCase().includes('pause')) {
+              playButton.click();
+            }
+          } catch (e) {
+            console.log('Could not pause audio:', e);
+          }
+        `);
+        
+        mainWindow.destroy();
+        app.quit();
+      } catch (error) {
+        console.log('Error pausing audio:', error);
+        mainWindow.destroy();
+        app.quit();
+      }
     }
   });
 
   mainWindow.loadURL("https://music.youtube.com");
   
-  // Hide cast buttons after page loads
+  // Hide cast buttons
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.webContents.insertCSS(`
       .ytmusic-player-bar .middle-controls [aria-label*="cast" i],
@@ -408,14 +548,19 @@ if (gotTheLock) {
   app.whenReady().then(createWindow);
 
   app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") {
-      app.quit();
+    if (!minimizeToTray) {
+      if (process.platform !== "darwin") {
+        app.quit();
+      }
     }
   });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+    } else {
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 }

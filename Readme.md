@@ -48,7 +48,7 @@ A simple desktop application for **YouTube Music**.
 
 > ### Notes
 > **Worried about account bans due to ad blocking?**
-> Use a **burner account/email** or **just don't tun on**, or stick with **v1.4.0** — that version doesn’t include any ad-blocker functionality.
+> Use a **burner account/email** or stick with **v1.4.0** — that version doesn’t include any ad-blocker functionality.
 ---
 
 ## License
