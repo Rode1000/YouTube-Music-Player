@@ -1,0 +1,10 @@
+{
+    "app_name": "Reproductor YouTube Music",
+    "show": "Mostrar",
+    "quit": "Salir",
+    "settings": "Ajustes",
+    "start_with_windows": "Iniciar con Windows",
+    "minimize_to_tray": "Minimizar en bandeja del sistema",
+    "hide_to_tray": "Ocultar en bandeja",
+    "update_ad_filters": "Actualizar filtros de anuncios"
+  }

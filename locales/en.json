@@ -1,0 +1,10 @@
+{
+    "app_name": "YouTube Music Player",
+    "show": "Show",
+    "quit": "Quit",
+    "settings": "Settings",
+    "start_with_windows": "Start with Windows",
+    "minimize_to_tray": "Minimize to System Tray",
+    "hide_to_tray": "Hide to Tray",
+    "update_ad_filters": "Update Ad Filters"
+  }

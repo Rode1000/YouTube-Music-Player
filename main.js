@@ -11,6 +11,9 @@ let mainWindow;
 let tray;
 let minimizeToTray = false;
 
+// Support for multiple languages
+const i18n = {};
+
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
 
 // Single instance lock
@@ -62,6 +65,33 @@ async function saveConfig() {
   }
 }
 
+// Load a specific language file
+async function loadLanguage(lang) {
+  // Try to load the language file from the 'locales' directory
+  const langPath = path.join(__dirname, 'locales', `${lang}.json`);
+  try {
+    const data = await fs.readFile(langPath, 'utf8');
+    // Parse the JSON data and merge it with the existing i18n object
+    Object.assign(i18n, JSON.parse(data));
+    console.log(`Language loaded: ${lang}`);
+  } catch (error) {
+    console.error(`Error loading language file for ${lang}:`, error.message);
+    // Fallback to English if the requested language is not available
+    if (lang !== 'en') {
+      console.log('Falling back to English...');
+      await loadLanguage('en');
+    }
+  }
+}
+
+// Get the translated string for a given key
+function t(key, ...args) {
+  const text = i18n[key] || key;
+  return text.replace(/{(\d+)}/g, (match, number) => {
+    return typeof args[number] !== 'undefined' ? args[number] : match;
+  });
+}
+
 const filterLists = [
   {
     name: "easylist",
@@ -101,14 +131,14 @@ function createTray() {
   
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show',
+      label: t('show'),
       click: () => {
         mainWindow.show();
         mainWindow.focus();
       }
     },
     {
-      label: 'Quit',
+      label: t('quit'),
       click: () => {
         app.isQuiting = true;
         app.quit();
@@ -117,7 +147,7 @@ function createTray() {
   ]);
   
   tray.setContextMenu(contextMenu);
-  tray.setToolTip('YouTube Music Player');
+  tray.setToolTip(t('app_name'));
   
   // Double-click to show/hide
   tray.on('double-click', () => {
@@ -317,10 +347,10 @@ function createMenu() {
   
   const template = [
     {
-      label: 'Settings',
+      label: t('settings'),
       submenu: [
         {
-          label: 'Start with Windows',
+          label: t('start_with_windows'),
           type: 'checkbox',
           checked: loginItemSettings.openAtLogin,
           click: (menuItem) => {
@@ -333,7 +363,7 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Minimize to System Tray',
+          label: t('minimize_to_tray'),
           type: 'checkbox',
           checked: minimizeToTray,
           click: (menuItem) => {
@@ -342,7 +372,7 @@ function createMenu() {
         },
         // Show tray option only when enabled
         ...(minimizeToTray ? [{
-          label: 'Hide to Tray',
+          label: t('hide_to_tray'),
           accelerator: 'Ctrl+H',
           click: () => {
             mainWindow.hide();
@@ -350,7 +380,7 @@ function createMenu() {
         }] : []),
         { type: 'separator' },
         {
-          label: 'Update Ad Filters',
+          label: t('update_ad_filters'),
           click: async () => {
             console.log('Manually updating filters...');
             const success = await initializeFilterEngine(true);
@@ -380,7 +410,11 @@ function createMenu() {
 
 async function createWindow() {
   await loadConfig();
-  
+
+  // Get system locale and load language
+  const userLocale = app.getLocale().split('-')[0];
+  await loadLanguage(userLocale);
+
   if (minimizeToTray) {
     createTray();
   }
