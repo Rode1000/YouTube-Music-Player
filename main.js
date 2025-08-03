@@ -1,10 +1,70 @@
-const { app, BrowserWindow, session } = require("electron");
+const { app, BrowserWindow, session, Menu } = require("electron");
 const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 let snfe;
 let mainWindow;
+
+// Handle startup settings
+function handleStartupSettings() {
+  const args = process.argv.slice(1);
+  
+  if (args.includes('--enable-startup')) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: app.getPath('exe')
+    });
+    console.log('✓ Startup enabled');
+  }
+  
+  if (args.includes('--disable-startup')) {
+    app.setLoginItemSettings({
+      openAtLogin: false
+    });
+    console.log('✓ Startup disabled');
+  }
+  
+  // Check current startup status
+  const loginItemSettings = app.getLoginItemSettings();
+  console.log(`Startup status: ${loginItemSettings.openAtLogin ? 'Enabled' : 'Disabled'}`);
+}
+
+// Create application menu with startup toggle
+function createMenu() {
+  const loginItemSettings = app.getLoginItemSettings();
+  
+  const template = [
+    {
+      label: 'Settings',
+      submenu: [
+        {
+          label: 'Start with Windows',
+          type: 'checkbox',
+          checked: loginItemSettings.openAtLogin,
+          click: (menuItem) => {
+            app.setLoginItemSettings({
+              openAtLogin: menuItem.checked,
+              path: app.getPath('exe')
+            });
+            console.log(`Startup ${menuItem.checked ? 'enabled' : 'disabled'}`);
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Quit',
+          accelerator: 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]
+    }
+  ];
+  
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
 
 async function createWindow() {
   const blockableResourceTypes = {
@@ -86,11 +146,14 @@ async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     webPreferences: {
       nodeIntegration: false,
     },
   });
+
+  // Create menu after window is created
+  createMenu();
 
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     const resourceType = details.resourceType;
@@ -160,6 +223,9 @@ async function createWindow() {
 
   mainWindow.loadURL("https://music.youtube.com");
 }
+
+// Handle startup settings on app start
+handleStartupSettings();
 
 app.whenReady().then(createWindow);
 
