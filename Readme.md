@@ -2,7 +2,7 @@
 
 A simple desktop application for **YouTube Music**.
 
-[![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![powered by Ghostery](https://img.shields.io/badge/ghostery-powered-blue?logo=ghostery)](https://github.com/ghostery/adblocker) [![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases)
+[![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases)
 
 
 ---
@@ -26,7 +26,7 @@ A simple desktop application for **YouTube Music**.
 - **Minimize to Tray**: Close the app window to minimize it to the system tray.
 - **Dicord Rich Presence**: Sets Discord Profile status to current song that plays.
 - **Listen on YouTube**: Other users who see your profile status can search for the current song by pressing **"Listen on YouTube"**. 
-- **YouTube Ad Blocker**: Blocks YouTube ads inside the app with a handy toggle to turn it on/off.
+- **YouTube Ad Blocker**: Blocks YouTube ads.
 ---
 
 ## Get Started
@@ -55,6 +55,6 @@ A simple desktop application for **YouTube Music**.
 - This software is provided "as-is" without any warranties or guarantees. 
 - It is for personal use only.
 - licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-- adblocker-electron [`@ghostery/adblocker-electron`](https://github.com/cliqz-oss/adblocker)
+- uBlock Origin [`@gorhill/ubo-core`](https://github.com/cliqz-oss/adblocker)
 
 ---
