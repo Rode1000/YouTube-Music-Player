@@ -1,370 +1,160 @@
-const fs = require("fs");
-const path = require("path");
-const { app, BrowserWindow, Menu, Tray } = require("electron");
-const rpc = require("discord-rpc");
-const si = require("systeminformation");
+const { app, BrowserWindow, session } = require('electron');
+const { StaticNetFilteringEngine } = require('@gorhill/ubo-core');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-//ad Blocker
-const { ElectronBlocker, fullLists, Request } = require('@ghostery/adblocker-electron');
-const fetch = require('cross-fetch');
-let blocked = false;
-let blocker = null;
-
+let snfe;
 let mainWindow;
-let tray = null;
-let minimizeToTray = true;
-let appIsQuitting = false; // Initialize app quitting state
 
-// Read config.json with error handling
-let config;
-try {
-  config = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json")));
-} catch (error) {
-  console.error("Error reading config.json:", error);
-  process.exit(1); // Exit the app if config is not available
-}
-const clientId = config.clientId;
+async function createWindow() {
+  // Setup uBO-core
+  snfe = await StaticNetFilteringEngine.create();
 
-
-// Discord Rich Presence setup
-rpc.register(clientId);
-let client = new rpc.Client({ transport: "ipc" });
-
-let isConnected = false;
-let presenceUpdateInterval; // Interval for updating Discord Rich Presence
-
-// Function to set Discord Rich Presence activity
-function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist", songUrl = "", albumArtUrl = "") {
-  if (!client) return;
-
-  client
-    .setActivity({
-      details: `${songTitle}`,
-      state: `by ${artist}`,
-      largeImageKey: albumArtUrl || "icon",
-      largeImageText: "YouTube Music",
-      instance: false,
-      buttons: [
-        {
-          label: "Listen on YouTube Music",
-          url: songUrl || "https://music.youtube.com",
-        },
-        {
-          label: "Get App",
-          url: "https://github.com/nubsuki/YouTube-Music-Player",
-        },
-      ],
-    })
-    .catch((error) => {
-      console.error("Error setting Discord activity:", error);
-    });
-}
-
-// Fetch song info from YouTube Music
-async function getCurrentSongInfo() {
-  try {
-    // Fetch song title and artist
-    const songTitle = await mainWindow.webContents.executeJavaScript(
-      `document.querySelector('.title.ytmusic-player-bar')?.textContent.trim() || 'Loading Song'`
-    );
-    const artist = await mainWindow.webContents.executeJavaScript(
-      `document.querySelector('.byline.ytmusic-player-bar')?.textContent.trim() || 'Loading Artist'`
-    );
-
-    const qartist = await mainWindow.webContents.executeJavaScript(`
-      (() => {
-        const byline = document.querySelector('.byline.ytmusic-player-bar')?.textContent.trim();
-        if (!byline) return 'Loading Artist';
-        // Split the text by '•' and take the first part
-        return byline.split('•')[0].trim() || 'Loading Artist';
-      })();
-    `);
-    
-    // Construct the search query URL
-    const query = encodeURIComponent(`${songTitle} by ${qartist}`);
-    const songUrl = `https://music.youtube.com/search?q=${query}`;
-
-    // Fetch the album art URL
-    const albumArtUrl = await mainWindow.webContents.executeJavaScript(`
-      (() => {
-        const imgElement = document.querySelector('.image.style-scope.ytmusic-player-bar');
-        return imgElement ? imgElement.src : '';
-      })();
-    `);
-
-    return { songTitle, artist, songUrl, albumArtUrl};
-  } catch (error) {
-    console.error("Error fetching song info:", error);
-    return { songTitle: "Loading Song", artist: "Loading Artist",  albumArtUrl: "" };
-  }
-}
-
-// Connect to Discord
-async function connectToDiscord() {
-  try {
-    // Properly destroy old client if it exists and is connected
-    if (client) {
-      try {
-        await client.destroy();
-        console.log("Destroyed old Discord client session.");
-      } catch (error) {
-        console.warn("Error destroying old client (might already be destroyed):", error.message);
-      }
-    }
-
-    // Create a new client instance
-    client = new rpc.Client({ transport: "ipc" });
-
-    client.on("ready", () => {
-      console.log("Successfully connected to Discord!");
-      isConnected = true;
-
-      // Set initial activity
-      setDiscordActivity();
-
-      // Periodically update Rich Presence
-      presenceUpdateInterval = setInterval(async () => {
-        const { songTitle, artist, songUrl, albumArtUrl } = await getCurrentSongInfo();
-        setDiscordActivity(songTitle, artist, songUrl, albumArtUrl);
-      }, 12000);
-    });
-
-    client.on("error", (error) => {
-      console.error("Discord RPC Error:", error.message);
-      handleDiscordDisconnect();
-    });
-
-    client.on("disconnected", () => {
-      console.warn("Disconnected from Discord. Attempting to reconnect...");
-      handleDiscordDisconnect();
-    });
-
-    // Attempt to login
-    await client.login({ clientId });
-  } catch (error) {
-    console.error("Failed to connect to Discord:", error.message);
-
-    // Retry connection after 10 seconds
-    if (!isConnected) {
-      setTimeout(connectToDiscord, 10000);
-    }
-  }
-}
-
-// Handle disconnections and clean up properly
-function handleDiscordDisconnect() {
-  isConnected = false;
-
-  if (client) {
-    client.clearActivity().catch((error) => console.error("Error clearing activity:", error.message));
-    client.destroy().catch((error) => console.error("Error destroying client:", error.message));
-  }
-
-  client = null; // Reset client to ensure a fresh connection next time
-  setTimeout(waitForDiscord, 5000);
-}
-
-
-// Check if Discord is running
-async function isDiscordRunning() {
-  try {
-    const processes = await si.processes();
-    return processes.list.some((process) => process.name.toLowerCase().includes("discord"));
-  } catch (error) {
-    console.error("Error checking processes:", error);
-    return false;
-  }
-}
-
-// Wait for Discord to start
-async function waitForDiscord() {
-  // Wait for Discord to start
-  while (!(await isDiscordRunning())) {
-    console.log("Waiting for Discord to start...");
-    await new Promise((resolve) => setTimeout(resolve, 5000)); // Check every 5 seconds
-  }
-
-  // Wait for 30 seconds before attempting to connect
-  console.log("Discord detected! Waiting 30 seconds before connecting...");
-  await new Promise((resolve) => setTimeout(resolve, 30000));
-
-  console.log("Attempting to connect to Discord...");
-  connectToDiscord(); // Attempt to connect after the delay
-}
-
-// Request a single instance lock
-const gotLock = app.requestSingleInstanceLock();
-
-if (!gotLock) {
-  app.quit();
-} else {
-  app.on("second-instance", () => {
-    if (mainWindow) {
-      if (!mainWindow.isVisible()) {
-        mainWindow.show();
-      } else if (mainWindow.isMinimized()) {
-        mainWindow.restore();
-      } else {
-        mainWindow.focus();
-      }
-    }
-  });
-
-  app.on("ready", () => {
-    mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      webPreferences: {
-        nodeIntegration: false, // Disable nodeIntegration for security
-        contextIsolation: true, // Enable context isolation
-        partition: "persist:youtube-music-data",
-      },
-      title: "YouTube Music",
-      backgroundColor: "#000000",
-      icon: path.join(
-        __dirname,
-        "assets",
-        process.platform === "win32" ? "icon.ico" : "icon.icns"
-      ),
-    });
-
-    //ad Blocker code block
-    function adblock() {
-      if (blocked) {
-        if (!blocker) {
-          // Create and enable only once
-          ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((createdBlocker) => {
-            blocker = createdBlocker;
-            blocker.enableBlockingInSession(mainWindow.webContents.session);
-            
-            blocker.on("request-blocked", (request) => {
-              console.log("Blocked:", request.url);
-            });
-
-            console.log("Ad blocker enabled");
-          }).catch((err) => {
-            console.error("Failed to enable ad blocker:", err);
-          });
-        } else {
-          // Blocker already exists, just re-enable it (if needed)
-          blocker.enableBlockingInSession(mainWindow.webContents.session);
-          console.log("Ad blocker re-enabled");
-        }
-      } else if (blocker) {
-        blocker.disableBlockingInSession(mainWindow.webContents.session);
-        console.log("Ad blocker disabled");
-      }
-    }
-
-
-    mainWindow.loadURL("https://music.youtube.com");
-
-    // Minimize to tray on close
-    mainWindow.on("close", (event) => {
-      if (minimizeToTray && !appIsQuitting) {
-        event.preventDefault();
-        mainWindow.hide();
-        if (!tray) {
-          const iconPath = path.join(__dirname, "assets", "icon.png");
-          if (fs.existsSync(iconPath)) {
-            tray = new Tray(iconPath);
-            tray.setToolTip("YouTube Music");
-
-            const contextMenu = Menu.buildFromTemplate([
-              {
-                label: "Show",
-                click: () => {
-                  mainWindow.show();
-                },
-              },
-              {
-                label: "Exit",
-                click: () => {
-                  appIsQuitting = true;
-                  app.quit();
-                },
-              },
-            ]);
-
-            tray.on("click", () => {
-              mainWindow.show();
-            });
-
-            tray.setContextMenu(contextMenu);
-          } else {
-            console.error("Tray icon not found at path:", iconPath);
-          }
-        }
-      }else {
-        // If minimizeToTray is false, allow the app to quit
-        appIsQuitting = true;
-        app.quit();
-      }return false;
-    });
-
-    // Custom menu
-    const menu = Menu.buildFromTemplate([
-      {
-        label: "App",
-        submenu: [
-          { role: "togglefullscreen" },
-          { role: "reload" },
-          { type: "separator" },
-          {
-            label: "Ad Blocker",
-            type: "checkbox",
-            checked: blocked,
-            click: (menuItem) => {
-              blocked = menuItem.checked;
-              adblock();
-            },
-          },
-          {
-            label: "Minimize to Tray on Close",
-            type: "checkbox",
-            checked: minimizeToTray,
-            checked: true,
-            enabled: false,
-          },
-          { type: "separator" },
-          {
-            label: "About",
-            click: () => {
-              const { shell } = require("electron");
-              shell.openExternal("https://github.com/nubsuki/YouTube-Music-Player");
-            },
-          },
-          {
-            label: "Quit",
-            accelerator: process.platform === "darwin" ? "Command+Q" : "Alt+F4",
-            click: () => {
-              appIsQuitting = true;
-              app.exit();
-            },
-          },
-        ],
-      },
-    ]);
-    Menu.setApplicationMenu(menu);
-
-    // Start monitoring for Discord
-    waitForDiscord();
-  });
-
-  app.on("before-quit", async () => {
-    appIsQuitting = true;
-    clearInterval(presenceUpdateInterval); // Clear the interval
-    if (tray) {
-      tray.destroy(); // Destroy the tray icon
-    }
+  console.log('Loading filter lists...');
   
-    // Pause music before quitting
+  // Define filter lists to load
+  const filterLists = [
+    {
+      name: 'easylist',
+      url: 'https://easylist.to/easylist/easylist.txt',
+      description: 'EasyList (Ad blocking)'
+    },
+    {
+      name: 'easyprivacy',
+      url: 'https://easylist.to/easylist/easyprivacy.txt',
+      description: 'EasyPrivacy (Privacy protection)'
+    },
+    {
+      name: 'ublock-filters',
+      url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt',
+      description: 'uBlock filters (Enhanced ad blocking)'
+    },
+    {
+      name: 'ublock-privacy',
+      url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt',
+      description: 'uBlock Privacy filters'
+    },
+    {
+      name: 'ublock-badware',
+      url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt',
+      description: 'uBlock Badware protection'
+    }
+  ];
+
+  // Load all filter lists
+  const lists = [];
+  for (const filterList of filterLists) {
     try {
-      await mainWindow.webContents.executeJavaScript(
-        `document.querySelector('video').pause()`
-      );
+      console.log(`Loading ${filterList.description}...`);
+      const response = await fetch(filterList.url);
+      if (response.ok) {
+        const content = await response.text();
+        lists.push({ name: filterList.name, raw: content });
+        console.log(`✓ ${filterList.description} loaded successfully`);
+      } else {
+        console.log(`✗ Failed to load ${filterList.description}: ${response.status}`);
+      }
     } catch (error) {
-      console.error("Error pausing music:", error);
+      console.log(`✗ Error loading ${filterList.description}:`, error.message);
+    }
+  }
+
+  // Apply all loaded filter lists
+  if (lists.length > 0) {
+    await snfe.useLists(lists);
+    console.log(`Filter engine ready with ${lists.length} filter lists loaded!`);
+  } else {
+    console.log('Warning: No filter lists were loaded successfully');
+  }
+
+  // Create browser window
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: false, // safer
+    },
+  });
+
+  // Intercept & block requests
+  session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    const shouldBlock = snfe.matchRequest({
+      originURL: details.referrer || details.url,
+      url: details.url,
+      type: 'script',
+    });
+
+    if (shouldBlock !== 0) {
+      console.log('Blocked:', details.url);
+      return callback({ cancel: true });
+    }
+    callback({});
+  });
+
+  // Handle window close event
+  mainWindow.on('close', async (event) => {
+    try {
+      // Pause the audio before closing
+      await mainWindow.webContents.executeJavaScript(`
+        try {
+          // Try to find and pause the audio player
+          const audio = document.querySelector('audio');
+          const video = document.querySelector('video');
+          const playButton = document.querySelector('[data-testid="play-pause-button"], .play-pause-button, [aria-label*="pause" i], [title*="pause" i]');
+          
+          if (audio && !audio.paused) {
+            audio.pause();
+          }
+          if (video && !video.paused) {
+            video.pause();
+          }
+          if (playButton && playButton.getAttribute('aria-label') && playButton.getAttribute('aria-label').toLowerCase().includes('pause')) {
+            playButton.click();
+          }
+        } catch (e) {
+          console.log('Could not pause audio:', e);
+        }
+      `);
+    } catch (error) {
+      console.log('Error pausing audio:', error);
     }
   });
+
+  // Load YouTube Music
+  mainWindow.loadURL('https://music.youtube.com');
 }
+
+// Handle app events
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+// Handle before-quit to ensure clean exit
+app.on('before-quit', async (event) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      await mainWindow.webContents.executeJavaScript(`
+        try {
+          const audio = document.querySelector('audio');
+          const video = document.querySelector('video');
+          if (audio) audio.pause();
+          if (video) video.pause();
+        } catch (e) {
+          console.log('Could not pause media:', e);
+        }
+      `);
+    } catch (error) {
+      console.log('Error in before-quit:', error);
+    }
+  }
+});

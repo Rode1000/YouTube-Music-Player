@@ -1,6 +1,7 @@
 {
-  "name": "youtube-music",
-  "version": "1.5.0",
+  "name": "youtube-music-player",
+  "version": "1.6.0",
+  "description": "YouTube Music Player",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -12,16 +13,9 @@
     "email": "nubsuki@proton.me"
   },
   "license": "ISC",
-  "description": "YouTube Music Player",
   "devDependencies": {
-    "electron": "^34.0.1",
+    "electron": "^34.5.8",
     "electron-builder": "^24.6.4"
-  },
-  "dependencies": {
-    "@ghostery/adblocker-electron": "^2.7.0",
-    "cross-fetch": "^4.1.0",
-    "discord-rpc": "^4.0.1",
-    "systeminformation": "^5.25.11"
   },
   "build": {
     "appId": "com.nubsuki.youtubemusic",
@@ -52,5 +46,9 @@
       "icon": "assets/icon.png",
       "category": "Audio"
     }
+  },
+  "dependencies": {
+    "@gorhill/ubo-core": "^0.1.30",
+    "node-fetch": "^3.3.2"
   }
 }
