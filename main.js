@@ -222,6 +222,35 @@ async function createWindow() {
   });
 
   mainWindow.loadURL("https://music.youtube.com");
+  
+  // Hide cast/connect device icons after page loads
+  mainWindow.webContents.once('did-finish-load', () => {
+    mainWindow.webContents.insertCSS(`
+      /* Hide Google Cast / Connect to device button */
+      .ytmusic-player-bar .middle-controls [aria-label*="cast" i],
+      .ytmusic-player-bar .middle-controls [aria-label*="connect" i],
+      ytmusic-menu-service-item-renderer[aria-label*="connect" i],
+      ytmusic-menu-service-item-renderer[aria-label*="cast" i],
+      tp-yt-google-cast,
+      .ytp-button[aria-label*="cast" i],
+      .ytp-button[data-tooltip-target-id*="cast"],
+      [data-title*="Cast"],
+      [data-title*="Connect"],
+      button[aria-label*="Connect to a device"],
+      button[aria-label*="Cast"],
+      /* Hide cast icon in header area */
+      .ytmusic-nav-bar [role="button"][aria-label*="cast" i],
+      .ytmusic-nav-bar [role="button"][aria-label*="connect" i],
+      /* Hide cast menu items */
+      .ytmusic-menu-service-item-renderer:has([aria-label*="cast" i]),
+      .ytmusic-menu-service-item-renderer:has([aria-label*="connect" i])
+      {
+        display: none !important;
+        visibility: hidden !important;
+      }
+    `);
+    console.log('✓ Cast/connect device icons hidden');
+  });
 }
 
 // Handle startup settings on app start
