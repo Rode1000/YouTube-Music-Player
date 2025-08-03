@@ -1,32 +1,26 @@
 # YouTube Music Desktop App
 
-A simple desktop application for **YouTube Music**.
+A simple desktop application for **YouTube Music** with ad blocking capabilities.
 
 [![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases)
-
 
 ---
 **YouTube Music Player**
 
 ![YTMusic](assets/ytmp.png)
 
-**Discord Rich Presence**
-- **Your Profile Status Preview:**
-
-![Rich Presence](assets/pstatus.png)
-- **How Others See Your Status:**
-
-![Rich Presence](assets/ostatus.png)
-
 ---
 
 ## Features
 
 - **Desktop YouTube Music**: A dedicated YouTube Music app with no distractions.
-- **Minimize to Tray**: Close the app window to minimize it to the system tray.
-- **Dicord Rich Presence**: Sets Discord Profile status to current song that plays.
-- **Listen on YouTube**: Other users who see your profile status can search for the current song by pressing **"Listen on YouTube"**. 
-- **YouTube Ad Blocker**: Blocks YouTube ads.
+- **Ad Blocking**: Blocks YouTube ads using multiple filter lists (EasyList, EasyPrivacy, uBlock filters).
+- **Minimize to Tray**: Close the app window to minimize it to the system tray and keep music playing (Remembers last toggle state).
+- **System Integration**: Optional startup with Windows and single instance protection.
+- **Smart Caching**: Caches filter lists and updates once a day for better performance.
+- **Cast Button Removal**: Automatically hides cast/connect buttons for cleaner interface.
+- **Start with Windows**: Launch automatically on system startup.
+
 ---
 
 ## Get Started
@@ -40,21 +34,32 @@ A simple desktop application for **YouTube Music**.
    - Run the setup file and follow the on-screen instructions to install the app.
 
 3. **Launch the App**:
-   - Once installed, you can start the app and enjoy YouTube Music on your desktop! 🎉
+   - Once installed, you can start the app and enjoy YouTube Music on your desktop!
 
 ### Linux
 - Make sure fuse2 is installed
-- **Discord Rich Presence** might not work perfectly on all systems.
+- Download the AppImage or deb package from releases
+
+## Settings
+
+Access settings through the **Settings** menu:
+
+- **Start with Windows**: Launch automatically on system startup
+- **Minimize to System Tray**: Configure minimize behavior
+- **Update Ad Filters**: Manually refresh ad blocking filters
+- **Hide to Tray**: Use Ctrl+H to minimize to tray
 
 > ### Notes
 > **Worried about account bans due to ad blocking?**
-> Use a **burner account/email** or stick with **v1.4.0** — that version doesn’t include any ad-blocker functionality.
+> Use a **burner account/email** or stick with **v1.4.0** — that version doesn't include any ad-blocker functionality.
+> Current version is **v1.6.0** with enhanced ad blocking features.
+
 ---
 
 ## License
 - This software is provided "as-is" without any warranties or guarantees. 
 - It is for personal use only.
-- licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-- uBlock Origin [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
+- Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- uBlock Origin core by [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
 
 ---
