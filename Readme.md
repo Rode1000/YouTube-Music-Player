@@ -55,6 +55,6 @@ A simple desktop application for **YouTube Music**.
 - This software is provided "as-is" without any warranties or guarantees. 
 - It is for personal use only.
 - licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-- uBlock Origin [`@gorhill/ubo-core`](https://github.com/cliqz-oss/adblocker)
+- uBlock Origin [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
 
 ---
