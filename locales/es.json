@@ -6,5 +6,6 @@
     "start_with_windows": "Iniciar con Windows",
     "minimize_to_tray": "Minimizar en bandeja del sistema",
     "hide_to_tray": "Ocultar en bandeja",
-    "update_ad_filters": "Actualizar filtros de anuncios"
+    "update_ad_filters": "Actualizar filtros de anuncios",
+    "notify_tray": "La aplicación se ha minimizado en bandeja. La música sigue reproduciéndose."
   }

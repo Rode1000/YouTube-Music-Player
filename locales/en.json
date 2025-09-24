@@ -6,5 +6,6 @@
     "start_with_windows": "Start with Windows",
     "minimize_to_tray": "Minimize to System Tray",
     "hide_to_tray": "Hide to Tray",
-    "update_ad_filters": "Update Ad Filters"
+    "update_ad_filters": "Update Ad Filters",
+    "notify_tray": "App minimized to tray. Music continues playing."
   }

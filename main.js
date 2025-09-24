@@ -512,7 +512,7 @@ async function createWindow() {
         tray.displayBalloon({
           iconType: 'info',
           title: 'YouTube Music',
-          content: 'App minimized to tray. Music continues playing.'
+          content: t('notify_tray')
         });
         mainWindow.trayNotificationShown = true;
       }
