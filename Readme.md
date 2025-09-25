@@ -58,7 +58,6 @@ Access settings through the **Settings** menu:
 
 ## License
 - This software is provided "as-is" without any warranties or guarantees. 
-- It is for personal use only.
 - Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - uBlock Origin core by [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
 
