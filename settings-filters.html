@@ -11,12 +11,24 @@
         <form id="filter-form">
             <section id="filter-list"></section>
             <footer>
-                <a href="#" id="add-filter" role="button" class="secondary outline"></a>
+                <a href="#" id="add-filter" role="button" class="outline add-filter-green">
+                    <i class="bi bi-plus-circle"></i> 
+                    <span id="add-filter-text"></span>
+                </a>
             </footer>
             <div class="controls">
-                <button id="reset-button" class="secondary outline"></button>
-                <button id="cancel-button" class="secondary"></button>
-                <button id="save-button" class="primary"></button>
+                <button id="reset-button" class="secondary outline">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span id="reset-button-text"></span>
+                </button>
+                <button id="cancel-button" class="cancel-red">
+                    <i class="bi bi-x-circle"></i>
+                    <span id="cancel-button-text"></span>
+                </button>
+                <button id="save-button" class="primary">
+                    <i class="bi bi-save"></i>
+                    <span id="save-button-text"></span>
+                </button>
             </div>
         </form>
     </main>

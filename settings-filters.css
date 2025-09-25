@@ -1,5 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 
+/* Global reset and basic structure styles */
+:root {
+    --primary: #007bff; /* Primary color definition (Blue) */
+    --secondary: #6c757d; /* Secondary color definition (Gray) */
+    --success: #28a745; /* Success color definition (Green) */
+    --danger: #dc3545; /* Danger color definition (Red) */
+    --border-radius: 0.25rem;
+    --spacing: 0.75rem 1.5rem;
+    --font-color: #333;
+    --background-color: #fff;
+    --input-border: #ccc;
+    --input-focus-border: var(--primary);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -10,24 +24,143 @@ body {
     padding: 2rem; 
     max-width: 900px;
     margin: auto;
+    line-height: 1.5;
+    color: var(--font-color);
+    background-color: var(--background-color);
 }
+
+/* Base button and input styling (to replace Pico's base styles) */
+input[type="text"], button, a[role="button"] {
+    padding: var(--spacing);
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease-in-out;
+}
+
+input[type="text"] {
+    border: 1px solid var(--input-border);
+    background-color: var(--background-color);
+    color: var(--font-color);
+    width: 100%;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+}
+
+button, a[role="button"] {
+    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid transparent;
+    text-decoration: none;
+    display: inline-flex; /* Use flex to align icon and text */
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* Space between icon and text */
+}
+
+/* Primary Button (Save - Blue) */
+.primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+.primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* Secondary Button (Default - Gray) */
+.secondary {
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+    color: #fff;
+}
+.secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+/* --- CUSTOM COLOR MODIFIERS --- */
+
+/* Add Filter (Green outline) */
+.add-filter-green.outline {
+    border-color: var(--success);
+    color: var(--success);
+}
+.add-filter-green.outline:hover {
+    background-color: var(--success);
+    color: #fff;
+}
+
+/* Cancel Button (Red filled) */
+.cancel-red {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+.cancel-red:hover {
+    background-color: #c82333;
+    border-color: #c82333;
+}
+
+/* Delete Button (Red outline) */
+.danger-red {
+    background-color: transparent;
+    border-color: var(--danger);
+    color: var(--danger);
+}
+.danger-red:hover {
+    background-color: var(--danger);
+    color: #fff;
+}
+
+/* Outline style modifier (Default - Gray outline for Reset Button) */
+.outline {
+    background-color: transparent;
+}
+.secondary.outline {
+    border-color: var(--secondary);
+    color: var(--secondary);
+}
+.secondary.outline:hover {
+    background-color: var(--secondary);
+    color: #fff;
+}
+
+/* Filter list specific styles */
 .filter-item {
     display: flex;
-    align-items: baseline;
+    align-items: baseline; 
     gap: 1rem;
     margin-bottom: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #eee;
+}
+.filter-item:last-child {
+    border-bottom: none;
 }
 .filter-item input[type="text"] {
     flex-grow: 1;
+    padding: 0.5rem;
 }
 .filter-item label {
     flex-shrink: 0;
     margin-bottom: 0;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .filter-item button {
     margin: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
 }
+
+/* Control section styles */
 .controls {
     display: flex;
     gap: 1rem;
@@ -35,6 +168,5 @@ body {
     margin-top: 2rem;
 }
 #add-filter {
-    cursor: pointer;
-    text-decoration: none;
+    padding: 0.5rem 1rem;
 }
