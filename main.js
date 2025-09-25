@@ -11,7 +11,11 @@ let mainWindow;
 let tray;
 let minimizeToTray = false;
 
+// Support for multiple languages
+const i18n = {};
+
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
+const USER_FILTERS_FILE = path.join(app.getPath('userData'), 'user-filters.json');
 
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
@@ -62,31 +66,149 @@ async function saveConfig() {
   }
 }
 
+// Load a specific language file
+async function loadLanguage(lang) {
+  // Try to load the language file from the 'locales' directory
+  const langPath = path.join(__dirname, 'locales', `${lang}.json`);
+  try {
+    const data = await fs.readFile(langPath, 'utf8');
+    // Parse the JSON data and merge it with the existing i18n object
+    Object.assign(i18n, JSON.parse(data));
+    console.log(`Language loaded: ${lang}`);
+  } catch (error) {
+    console.error(`Error loading language file for ${lang}:`, error.message);
+    // Fallback to English if the requested language is not available
+    if (lang !== 'en') {
+      console.log('Falling back to English...');
+      await loadLanguage('en');
+    }
+  }
+}
+
+// Get the translated string for a given key
+function t(key, ...args) {
+  const text = i18n[key] || key;
+  return text.replace(/{(\d+)}/g, (match, number) => {
+    return typeof args[number] !== 'undefined' ? args[number] : match;
+  });
+}
+
+async function saveUserFilters(userFilters) {
+  try {
+    await fs.writeFile(USER_FILTERS_FILE, JSON.stringify(userFilters, null, 2), 'utf8');
+    console.log('User filters saved successfully');
+  } catch (error) {
+    console.log('Error saving user filters:', error.message);
+  }
+}
+
+async function loadUserFilters() {
+  try {
+    const filtersData = await fs.readFile(USER_FILTERS_FILE, 'utf8');
+    const userFilters = JSON.parse(filtersData);
+    console.log('User filters loaded successfully');
+    return userFilters;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.log('No user filters file found, using defaults.');
+      await saveUserFilters(filterLists);
+      return filterLists;
+    } else {
+      console.log('Error loading user filters:', error.message);
+    }
+    // Return an empty array if the file doesn't exist or an error occurs
+    return [];
+  }
+}
+
+function createSettingsWindow() {
+  const settingsWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    parent: mainWindow,
+    modal: true,
+    show: false,
+    resizable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+  
+  // Set the menu to null for the settings window
+  settingsWindow.setMenu(null);
+
+  settingsWindow.loadFile(path.join(__dirname, 'settings-filters.html'));
+
+  settingsWindow.once('ready-to-show', () => {
+    settingsWindow.show();
+  });
+
+  return settingsWindow;
+}
+
+const { ipcMain } = require('electron');
+
+ipcMain.handle('get-filters', async () => {
+  return await loadUserFilters();
+});
+
+ipcMain.handle('get-translations', (event, keys) => {
+  const translations = {};
+  keys.forEach(key => {
+      translations[key] = t(key);
+  });
+  return translations;
+});
+
+ipcMain.on('save-filters', async (event, newFilters) => {
+  await saveUserFilters(newFilters);
+  // Reload the filter engine with the new user settings
+  await initializeFilterEngine(true);
+});
+
+ipcMain.on('reset-filters', async (event) => {
+  try {
+      await saveUserFilters(filterLists);
+      console.log('User filters reset to default successfully.');
+      // Re-initialize the filter engine to apply the changes immediately
+      await initializeFilterEngine(true);
+  } catch (error) {
+      console.log('Error resetting user filters:', error.message);
+  }
+});
+
 const filterLists = [
   {
     name: "easylist",
     url: "https://easylist.to/easylist/easylist.txt",
     description: "EasyList (Ad blocking)",
+    enabled: true,
   },
   {
     name: "easyprivacy",
     url: "https://easylist.to/easylist/easyprivacy.txt",
     description: "EasyPrivacy (Privacy protection)",
+    enabled: true,
   },
   {
     name: "ublock-filters",
     url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
     description: "uBlock filters (Enhanced ad blocking)",
+    enabled: true,
   },
   {
     name: "ublock-privacy",
     url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
     description: "uBlock Privacy filters",
+    enabled: true,
   },
   {
     name: "ublock-badware",
     url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
     description: "uBlock Badware protection",
+    enabled: true,
   },
 ];
 
@@ -101,14 +223,14 @@ function createTray() {
   
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show',
+      label: t('show'),
       click: () => {
         mainWindow.show();
         mainWindow.focus();
       }
     },
     {
-      label: 'Quit',
+      label: t('quit'),
       click: () => {
         app.isQuiting = true;
         app.quit();
@@ -117,7 +239,7 @@ function createTray() {
   ]);
   
   tray.setContextMenu(contextMenu);
-  tray.setToolTip('YouTube Music Player');
+  tray.setToolTip(t('app_name'));
   
   // Double-click to show/hide
   tray.on('double-click', () => {
@@ -272,18 +394,29 @@ async function initializeFilterEngine(forceUpdate = false) {
       snfe = await StaticNetFilteringEngine.create();
     }
     
-    const lists = await loadAllFilters(forceUpdate);
+    const allFilterLists = await loadUserFilters();
     
-    if (lists.length > 0) {
-      await snfe.useLists(lists);
-      console.log(`Filter engine ready with ${lists.length} lists!`);
+    const enabledFilterLists = allFilterLists.filter(f => f.enabled);
+
+    const filterPromises = enabledFilterLists.map(filterList => 
+      loadFilter(filterList, forceUpdate).then(content => 
+        content ? { name: filterList.name, raw: content } : null
+      )
+    );
+    
+    const results = await Promise.all(filterPromises);
+    const validFilters = results.filter(result => result !== null);
+    
+    if (validFilters.length > 0) {
+      await snfe.useLists(validFilters);
+      console.log(`Filter engine ready with ${validFilters.length} lists!`);
       
       if (mainWindow) {
         createMenu();
       }
     }
     
-    return lists.length > 0;
+    return validFilters.length > 0;
   } catch (error) {
     console.log('Error initializing filter engine:', error.message);
     return false;
@@ -317,10 +450,10 @@ function createMenu() {
   
   const template = [
     {
-      label: 'Settings',
+      label: t('settings'),
       submenu: [
         {
-          label: 'Start with Windows',
+          label: t('start_with_windows'),
           type: 'checkbox',
           checked: loginItemSettings.openAtLogin,
           click: (menuItem) => {
@@ -333,7 +466,7 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Minimize to System Tray',
+          label: t('minimize_to_tray'),
           type: 'checkbox',
           checked: minimizeToTray,
           click: (menuItem) => {
@@ -342,7 +475,7 @@ function createMenu() {
         },
         // Show tray option only when enabled
         ...(minimizeToTray ? [{
-          label: 'Hide to Tray',
+          label: t('hide_to_tray'),
           accelerator: 'Ctrl+H',
           click: () => {
             mainWindow.hide();
@@ -350,7 +483,13 @@ function createMenu() {
         }] : []),
         { type: 'separator' },
         {
-          label: 'Update Ad Filters',
+          label: t('ad_filter_settings'),
+          click: () => {
+            createSettingsWindow();
+          }
+        },
+        {
+          label: t('update_ad_filters'),
           click: async () => {
             console.log('Manually updating filters...');
             const success = await initializeFilterEngine(true);
@@ -380,7 +519,11 @@ function createMenu() {
 
 async function createWindow() {
   await loadConfig();
-  
+
+  // Get system locale and load language
+  const userLocale = app.getLocale().split('-')[0];
+  await loadLanguage(userLocale);
+
   if (minimizeToTray) {
     createTray();
   }
@@ -478,7 +621,7 @@ async function createWindow() {
         tray.displayBalloon({
           iconType: 'info',
           title: 'YouTube Music',
-          content: 'App minimized to tray. Music continues playing.'
+          content: t('notify_tray')
         });
         mainWindow.trayNotificationShown = true;
       }
