@@ -59,8 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!filter.isDefault) {
                 const deleteButton = document.createElement('button');
-                deleteButton.textContent = translations.delete;
-                deleteButton.className = 'secondary outline';
+                deleteButton.className = 'delete-btn';
+                deleteButton.title = translations.delete;
+                deleteButton.setAttribute('aria-label', translations.delete);
+                
+                const trashIcon = document.createElement('i');
+                trashIcon.className = 'bi bi-trash';
+                deleteButton.appendChild(trashIcon);
+                
                 deleteButton.addEventListener('click', () => {
                     allFilters.splice(index, 1);
                     renderFilters();
