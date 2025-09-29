@@ -20,6 +20,11 @@ const USER_FILTERS_FILE = path.join(app.getPath('userData'), 'user-filters.json'
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
 
+// Icon
+const iconPath = process.platform === 'win32' 
+  ? path.join(__dirname, 'assets', 'icon.ico')
+  : path.join(__dirname, 'assets', 'icon.png');
+
 if (!gotTheLock) {
   app.quit();
 } else {
@@ -214,10 +219,6 @@ const filterLists = [
 
 function createTray() {
   if (tray) return;
-  
-  const iconPath = process.platform === 'win32' 
-    ? path.join(__dirname, 'assets', 'icon.ico')
-    : path.join(__dirname, 'assets', 'icon.png');
     
   tray = new Tray(iconPath);
   
@@ -550,9 +551,7 @@ async function createWindow() {
     width: 1200,
     height: 800,
     autoHideMenuBar: false,
-    icon: process.platform === 'win32' 
-      ? path.join(__dirname, 'assets', 'icon.ico')
-      : path.join(__dirname, 'assets', 'icon.png'),
+    icon: iconPath,
     webPreferences: {
       nodeIntegration: false,
     },

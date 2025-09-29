@@ -1,5 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 
+/* Global reset and basic structure styles */
+:root {
+    --primary: #007bff; /* Primary color definition (Blue) */
+    --secondary: #6c757d; /* Secondary color definition (Gray) */
+    --success: #28a745; /* Success color definition (Green) */
+    --danger: #dc3545; /* Danger color definition (Red) */
+    --border-radius: 0.25rem;
+    --spacing: 0.75rem 1.5rem;
+    --font-color: #333;
+    --background-color: #fff;
+    --input-border: #ccc;
+    --input-focus-border: var(--primary);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -40,6 +54,7 @@ body {
 .filter-item:hover {
     background: #333333;
     border-color: #555;
+
 }
 
 .filter-item input[type="text"] {
