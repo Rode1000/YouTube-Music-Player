@@ -88,11 +88,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Add delete button for non-default filters
             if (!filter.isDefault) {
                 const deleteButton = document.createElement('button');
-                // Add icon and span for text
-                deleteButton.innerHTML = `<i class="bi bi-trash"></i>`; 
-                // Use 'danger-red' class for delete button styling
-                deleteButton.className = 'outline danger-red'; 
-                // Remove filter from array and re-render the list on click
+                deleteButton.className = 'delete-btn';
+                deleteButton.title = translations.delete;
+                deleteButton.setAttribute('aria-label', translations.delete);
+                
+                const trashIcon = document.createElement('i');
+                trashIcon.className = 'bi bi-trash';
+                deleteButton.appendChild(trashIcon);
+                
                 deleteButton.addEventListener('click', () => {
                     allFilters.splice(index, 1);
                     renderFilters();

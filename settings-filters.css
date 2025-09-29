@@ -20,153 +20,205 @@
     box-sizing: border-box;
     font-family: "Roboto", sans-serif;
 }
+
 body { 
-    padding: 2rem; 
-    max-width: 900px;
+    padding: 1.5rem; 
+    max-width: 800px;
     margin: auto;
-    line-height: 1.5;
-    color: var(--font-color);
-    background-color: var(--background-color);
+    background-color: #121212;
+    color: #e0e0e0;
+    min-height: 100vh;
 }
 
-/* Base button and input styling (to replace Pico's base styles) */
-input[type="text"], button, a[role="button"] {
-    padding: var(--spacing);
-    border-radius: var(--border-radius);
-    transition: all 0.2s ease-in-out;
+.container {
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid #333;
 }
 
-input[type="text"] {
-    border: 1px solid var(--input-border);
-    background-color: var(--background-color);
-    color: var(--font-color);
-    width: 100%;
-}
-
-input[type="text"]:focus {
-    outline: none;
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
-}
-
-button, a[role="button"] {
-    cursor: pointer;
-    font-weight: 500;
-    text-align: center;
-    border: 1px solid transparent;
-    text-decoration: none;
-    display: inline-flex; /* Use flex to align icon and text */
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem; /* Space between icon and text */
-}
-
-/* Primary Button (Save - Blue) */
-.primary {
-    background-color: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-}
-.primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
-
-/* Secondary Button (Default - Gray) */
-.secondary {
-    background-color: var(--secondary);
-    border-color: var(--secondary);
-    color: #fff;
-}
-.secondary:hover {
-    background-color: #5a6268;
-    border-color: #5a6268;
-}
-
-/* --- CUSTOM COLOR MODIFIERS --- */
-
-/* Add Filter (Green outline) */
-.add-filter-green.outline {
-    border-color: var(--success);
-    color: var(--success);
-}
-.add-filter-green.outline:hover {
-    background-color: var(--success);
-    color: #fff;
-}
-
-/* Cancel Button (Red filled) */
-.cancel-red {
-    background-color: var(--danger);
-    border-color: var(--danger);
-    color: #fff;
-}
-.cancel-red:hover {
-    background-color: #c82333;
-    border-color: #c82333;
-}
-
-/* Delete Button (Red outline) */
-.danger-red {
-    background-color: transparent;
-    border-color: var(--danger);
-    color: var(--danger);
-}
-.danger-red:hover {
-    background-color: var(--danger);
-    color: #fff;
-}
-
-/* Outline style modifier (Default - Gray outline for Reset Button) */
-.outline {
-    background-color: transparent;
-}
-.secondary.outline {
-    border-color: var(--secondary);
-    color: var(--secondary);
-}
-.secondary.outline:hover {
-    background-color: var(--secondary);
-    color: #fff;
-}
-
-/* Filter list specific styles */
 .filter-item {
-    display: flex;
-    align-items: baseline; 
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed #eee;
+    display: grid;
+    grid-template-columns: auto 1fr 2fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #2a2a2a;
+    border-radius: 8px;
+    border: 1px solid #404040;
+    transition: all 0.2s ease;
 }
-.filter-item:last-child {
-    border-bottom: none;
+
+.filter-item:hover {
+    background: #333333;
+    border-color: #555;
+
 }
+
 .filter-item input[type="text"] {
-    flex-grow: 1;
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #555;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
 }
+
+.filter-item input[type="text"]:focus {
+    outline: none;
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.25);
+}
+
+.filter-item input[type="text"]:disabled {
+    background-color: #333;
+    opacity: 0.6;
+    color: #888;
+}
+
+.filter-item input[type="text"]::placeholder {
+    color: #888;
+}
+
 .filter-item label {
-    flex-shrink: 0;
-    margin-bottom: 0;
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
-.filter-item button {
-    margin: 0;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    color: #b0b0b0;
 }
 
-/* Control section styles */
+.filter-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4dabf7;
+    background-color: #1a1a1a;
+    border: 1px solid #555;
+}
+
+.delete-btn {
+    padding: 0.5rem;
+    background: none;
+    border: 1px solid #dc3545;
+    border-radius: 6px;
+    color: #dc3545;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+}
+
+.delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.delete-btn i {
+    font-size: 14px;
+}
+
 .controls {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     justify-content: flex-end;
     margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #404040;
 }
+
+.controls button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.controls button.primary {
+    background-color: #4dabf7;
+    color: #121212;
+}
+
+.controls button.primary:hover {
+    background-color: #339af0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(77, 171, 247, 0.3);
+}
+
+.controls button.secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.controls button.secondary:hover {
+    background-color: #5a6268;
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.controls button.secondary.outline {
+    background-color: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+.controls button.secondary.outline:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
 #add-filter {
-    padding: 0.5rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: #51cf66;
+    color: #121212;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+#add-filter:hover {
+    background-color: #40c057;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #121212;
+    box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
+}
+
+footer {
+    margin: 1.5rem 0;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #666;
 }
