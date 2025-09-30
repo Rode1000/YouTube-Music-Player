@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Calculate and send final size to the main process
         const { clientWidth, clientHeight } = document.body;
         
-        // Añadir un margen extra (e.g., 20px) para evitar cortar bordes o barras de desplazamiento
+        // Add an extra margin (e.g., 20px) to avoid cutting off borders
         const finalWidth = clientWidth;
         const finalHeight = clientHeight + 20; 
         
