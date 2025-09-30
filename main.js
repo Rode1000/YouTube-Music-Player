@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, Menu, Tray } = require("electron");
+const { app, BrowserWindow, session, Menu, Tray, shell } = require("electron");
 const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -10,15 +10,22 @@ let snfe;
 let mainWindow;
 let tray;
 let minimizeToTray = false;
+let aboutWindow;
 
 // Support for multiple languages
 const i18n = {};
 
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
 const USER_FILTERS_FILE = path.join(app.getPath('userData'), 'user-filters.json');
+const { version: APP_VERSION } = require('./package.json');
 
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
+
+// Icon
+const iconPath = process.platform === 'win32' 
+  ? path.join(__dirname, 'assets', 'icon.ico')
+  : path.join(__dirname, 'assets', 'icon.png');
 
 if (!gotTheLock) {
   app.quit();
@@ -130,7 +137,7 @@ function createSettingsWindow() {
     show: false,
     resizable: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'settings-filters/sf-preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
     }
@@ -139,13 +146,46 @@ function createSettingsWindow() {
   // Set the menu to null for the settings window
   settingsWindow.setMenu(null);
 
-  settingsWindow.loadFile(path.join(__dirname, 'settings-filters.html'));
+  settingsWindow.loadFile(path.join(__dirname, 'settings-filters/settings-filters.html'));
 
   settingsWindow.once('ready-to-show', () => {
     settingsWindow.show();
   });
 
   return settingsWindow;
+}
+
+function createAboutWindow() {
+  aboutWindow = new BrowserWindow({
+    width: 450,
+    height: 430,
+    parent: mainWindow,
+    modal: true,
+    show: false,
+    resizable: false,
+    icon: iconPath,
+    title: t('about_app'),
+    webPreferences: {
+      preload: path.join(__dirname, 'about/about-preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    }
+  });
+
+  // Remove the menu bar for the about window
+  aboutWindow.setMenu(null);
+
+  // Load the new about.html file
+  aboutWindow.loadFile(path.join(__dirname, 'about/about.html'));
+
+  // Show the window once it is ready
+  aboutWindow.once('ready-to-show', () => {
+    aboutWindow.show();
+  });
+
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+  });
 }
 
 const { ipcMain } = require('electron');
@@ -176,6 +216,35 @@ ipcMain.on('reset-filters', async (event) => {
       await initializeFilterEngine(true);
   } catch (error) {
       console.log('Error resetting user filters:', error.message);
+  }
+});
+
+ipcMain.handle('get-about-info', () => {
+  return {
+    appName: t('app_name'),
+    appVersion: APP_VERSION,
+    appDescription: t('about_app_description'),
+    githubUrl: 'https://github.com/nubsuki/YouTube-Music-Player',
+    translations: {
+        accept: t('accept'),
+        version: t('version_label', APP_VERSION),
+        github_link: t('github_link_text')
+    }
+  };
+});
+
+ipcMain.on('open-external-link', (event, url) => {
+  shell.openExternal(url)
+    .catch(error => console.error('Error opening external link:', error));
+});
+
+ipcMain.on('resize-about-window', (event, width, height) => {
+  if (aboutWindow) {
+    // Set the size and adjust content bounds (important for different OS)
+    aboutWindow.setSize(width, height, true);
+
+    // Center the window after resizing
+    aboutWindow.center();
   }
 });
 
@@ -214,10 +283,6 @@ const filterLists = [
 
 function createTray() {
   if (tray) return;
-  
-  const iconPath = process.platform === 'win32' 
-    ? path.join(__dirname, 'assets', 'icon.ico')
-    : path.join(__dirname, 'assets', 'icon.png');
     
   tray = new Tray(iconPath);
   
@@ -502,11 +567,22 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Quit',
+          label: t('quit'),
           accelerator: 'Ctrl+Q',
           click: () => {
             app.isQuiting = true;
             app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: t('help'),
+      submenu: [
+        {
+          label: t('about'),
+          click: () => {
+            createAboutWindow();
           }
         }
       ]
@@ -550,9 +626,7 @@ async function createWindow() {
     width: 1200,
     height: 800,
     autoHideMenuBar: false,
-    icon: process.platform === 'win32' 
-      ? path.join(__dirname, 'assets', 'icon.ico')
-      : path.join(__dirname, 'assets', 'icon.png'),
+    icon: iconPath,
     webPreferences: {
       nodeIntegration: false,
     },
