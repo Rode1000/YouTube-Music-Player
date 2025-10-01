@@ -2,12 +2,14 @@
 
 A simple desktop application for **YouTube Music** with ad blocking capabilities.
 
-[![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases)
+[![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases)[![License](https://img.shields.io/github/license/nubsuki/iloveffmpeg)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/nubsuki/YouTube-Music-Player?style=social)](https://github.com/nubsuki/YouTube-Music-Player)
+[![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow?logo=buymeacoffee)](https://buymeacoffee.com/nubsuki)
 
 ---
 **YouTube Music Player**
 
-![YTMusic](assets/ytmp.png)
+![YTMusic](assets/ytmp-d2.png)
 
 ---
 
@@ -16,10 +18,10 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
 - **Desktop YouTube Music**: A dedicated YouTube Music app with no distractions.
 - **Ad Blocking**: Blocks YouTube ads using multiple filter lists (EasyList, EasyPrivacy, uBlock filters).
 - **Minimize to Tray**: Close the app window to minimize it to the system tray and keep music playing (Remembers last toggle state).
-- **System Integration**: Optional startup with Windows and single instance protection.
 - **Smart Caching**: Caches filter lists and updates once a day for better performance.
 - **Cast Button Removal**: Automatically hides cast/connect buttons for cleaner interface.
 - **Start with Windows**: Launch automatically on system startup.
+- **Filter Settings**: A new windows to configure filters.
 
 ---
 
@@ -40,19 +42,10 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
 - Make sure fuse2 is installed
 - Download the AppImage or deb package from releases
 
-## Settings
-
-Access settings through the **Settings** menu:
-
-- **Start with Windows**: Launch automatically on system startup
-- **Minimize to System Tray**: Configure minimize behavior
-- **Update Ad Filters**: Manually refresh ad blocking filters
-- **Hide to Tray**: Use Ctrl+H to minimize to tray
-
 > ### Notes
 > **Worried about account bans due to ad blocking?**
 > Use a **burner account/email** or stick with **v1.4.0** — that version doesn't include any ad-blocker functionality.
-> Current version is **v1.6.0** with enhanced ad blocking features.
+> Current version is **v1.6.0** with enhanced ad blocking features with uBlock Origin integration.
 
 ---
 
