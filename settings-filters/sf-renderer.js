@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saveButton = document.getElementById('save-button');
     const cancelButton = document.getElementById('cancel-button');
     const addFilterLink = document.getElementById('add-filter');
+    const moreFiltersLink = document.getElementById('more-filters');
     const resetButton = document.getElementById('reset-button');
     const configTitle = document.getElementById('config-title');
 
     configTitle.textContent = translations.ad_filter_config_title;
     addFilterLink.textContent = translations.add_new_filter;
+    moreFiltersLink.textContent = translations.more_filters;
     saveButton.textContent = translations.save;
     cancelButton.textContent = translations.cancel;
     resetButton.textContent = translations.reset;
@@ -101,6 +103,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         allFilters.push({ name: '', url: '', enabled: true, isDefault: false });
         renderFilters();
+    });
+
+    moreFiltersLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.electronAPI.openExternal('https://github.com/uBlockOrigin/uAssets/tree/master');
     });
 
     resetButton.addEventListener('click', () => {

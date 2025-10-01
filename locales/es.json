@@ -14,6 +14,7 @@
   "filter_name": "Nombre del Filtro",
   "filter_url": "URL del Filtro",
   "add_new_filter": "Añadir nuevo filtro",
+  "more_filters": "Más Filtros",
   "save": "Guardar",
   "cancel": "Cancelar",
   "delete": "Eliminar",
@@ -25,4 +26,4 @@
   "accept": "Aceptar",
   "version_label": "Versión {0}",
   "github_link_text": "Proyecto en GitHub"
-  }
+}

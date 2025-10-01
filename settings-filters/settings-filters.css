@@ -186,8 +186,33 @@ body {
     box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
 }
 
+#more-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: #4dabf7;
+    color: #121212;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+#more-filters:hover {
+    background-color: #339af0;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #121212;
+    box-shadow: 0 4px 12px rgba(77, 171, 247, 0.3);
+}
+
 footer {
     margin: 1.5rem 0;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 /* Scrollbar styling for dark theme */

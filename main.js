@@ -158,7 +158,7 @@ function createSettingsWindow() {
 function createAboutWindow() {
   aboutWindow = new BrowserWindow({
     width: 450,
-    height: 430,
+    height: 450,
     parent: mainWindow,
     modal: true,
     show: false,
@@ -279,6 +279,18 @@ const filterLists = [
     description: "uBlock Badware protection",
     enabled: true,
   },
+  {
+    name: "ublock-unbreak",
+    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/unbreak.txt",
+    description: "unbreak sites broken as a result of 3rd-party filter lists enabled by default",
+    enabled: true,
+  },
+  {
+    name: "ublock-Lite-filters",
+    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/ubol-filters.txt",
+    description: "Filters optimized for uBO Lite",
+    enabled: true,
+  }
 ];
 
 function createTray() {
