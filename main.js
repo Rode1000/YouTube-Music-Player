@@ -328,14 +328,14 @@ function createTray() {
     }
   });
   
-  console.log('✓ System tray created');
+  console.log('System tray created');
 }
 
 function destroyTray() {
   if (tray) {
     tray.destroy();
     tray = null;
-    console.log('✓ System tray removed');
+    console.log('System tray removed');
   }
 }
 
@@ -393,6 +393,8 @@ async function loadFromCache(filterName) {
 
 async function saveToCache(filterName, content) {
   try {
+    await ensureCacheDir();
+    
     const cacheFilePath = getCacheFilePath(filterName);
     const metaPath = getCacheMetaPath(filterName);
     
@@ -402,9 +404,9 @@ async function saveToCache(filterName, content) {
       filterName 
     }), 'utf8');
     
-    console.log(`✓ ${filterName} cached`);
+    console.log(`${filterName} cached`);
   } catch (error) {
-    console.log(`✗ Error caching ${filterName}:`, error.message);
+    console.log(`Error caching ${filterName}:`, error.message);
   }
 }
 
@@ -415,14 +417,14 @@ async function downloadFilter(filterList) {
     if (response.ok) {
       const content = await response.text();
       await saveToCache(filterList.name, content);
-      console.log(`✓ ${filterList.description} downloaded`);
+      console.log(`${filterList.description} downloaded`);
       return content;
     } else {
-      console.log(`✗ Failed to download ${filterList.description}: ${response.status}`);
+      console.log(`Failed to download ${filterList.description}: ${response.status}`);
       return null;
     }
   } catch (error) {
-    console.log(`✗ Error downloading ${filterList.description}:`, error.message);
+    console.log(`Error downloading ${filterList.description}:`, error.message);
     return null;
   }
 }
@@ -433,7 +435,7 @@ async function loadFilter(filterList, forceUpdate = false) {
     console.log(`Loading ${filterList.description} from cache...`);
     const cachedContent = await loadFromCache(filterList.name);
     if (cachedContent) {
-      console.log(`✓ ${filterList.description} loaded from cache`);
+      console.log(`${filterList.description} loaded from cache`);
       return cachedContent;
     }
   }
@@ -442,29 +444,6 @@ async function loadFilter(filterList, forceUpdate = false) {
 }
 
 // Load all filters in parallel
-async function loadAllFilters(forceUpdate = false) {
-  await ensureCacheDir();
-  
-  console.log(forceUpdate ? "Force updating filters..." : "Loading filters...");
-  
-  const filterPromises = filterLists.map(filterList => 
-    loadFilter(filterList, forceUpdate).then(content => 
-      content ? { name: filterList.name, raw: content } : null
-    )
-  );
-  
-  const results = await Promise.all(filterPromises);
-  const validFilters = results.filter(result => result !== null);
-  
-  if (validFilters.length > 0) {
-    console.log(`Filter loading complete! ${validFilters.length}/${filterLists.length} lists loaded`);
-  } else {
-    console.log("Warning: No filter lists loaded");
-  }
-  
-  return validFilters;
-}
-
 async function initializeFilterEngine(forceUpdate = false) {
   try {
     if (!snfe) {
@@ -508,14 +487,14 @@ function handleStartupSettings() {
       openAtLogin: true,
       path: app.getPath('exe')
     });
-    console.log('✓ Startup enabled');
+    console.log('Startup enabled');
   }
   
   if (args.includes('--disable-startup')) {
     app.setLoginItemSettings({
       openAtLogin: false
     });
-    console.log('✓ Startup disabled');
+    console.log('Startup disabled');
   }
   
   const loginItemSettings = app.getLoginItemSettings();
@@ -605,17 +584,7 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-async function createWindow() {
-  await loadConfig();
-
-  // Get system locale and load language
-  const userLocale = app.getLocale().split('-')[0];
-  await loadLanguage(userLocale);
-
-  if (minimizeToTray) {
-    createTray();
-  }
-
+function setupWebRequestHandler() {
   // Define what to block
   const blockableResourceTypes = {
     script: true,
@@ -633,23 +602,6 @@ async function createWindow() {
     navigation: false,
     sub_frame: true,
   };
-
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    autoHideMenuBar: false,
-    icon: iconPath,
-    webPreferences: {
-      nodeIntegration: false,
-    },
-  });
-
-  createMenu();
-
-  // Load filters in background
-  initializeFilterEngine().then((success) => {
-    console.log(success ? '✓ Ad blocking active' : '⚠ Ad blocking failed');
-  });
 
   // Block requests based on filter engine
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
@@ -693,6 +645,38 @@ async function createWindow() {
     }
 
     callback({});
+  });
+}
+
+async function createWindow() {
+  await loadConfig();
+
+  // Get system locale and load language
+  const userLocale = app.getLocale().split('-')[0];
+  await loadLanguage(userLocale);
+
+  if (minimizeToTray) {
+    createTray();
+  }
+
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    autoHideMenuBar: false,
+    icon: iconPath,
+    webPreferences: {
+      nodeIntegration: false,
+    },
+  });
+
+  createMenu();
+
+  // Load filters in background
+  initializeFilterEngine().then((success) => {
+    console.log(success ? 'Ad blocking active' : 'Ad blocking failed');
+    if (success) {
+      setupWebRequestHandler();
+    }
   });
 
   // Handle close button based on tray setting
@@ -767,7 +751,7 @@ async function createWindow() {
         visibility: hidden !important;
       }
     `);
-    console.log('✓ Cast buttons hidden');
+    console.log('Cast buttons hidden');
   });
 }
 
