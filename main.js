@@ -10,6 +10,7 @@ let snfe;
 let mainWindow;
 let tray;
 let minimizeToTray = false;
+let lastUrl = "https://music.youtube.com";
 let aboutWindow;
 
 // Video ad skipping settings
@@ -56,8 +57,9 @@ async function loadConfig() {
     minimizeToTray = config.minimizeToTray || false;
     videoAdSkipperEnabled = config.videoAdSkipperEnabled !== false;
     VideoAdSkipSpeed = config.VideoAdSkipSpeed || 2;
+    lastUrl = config.lastUrl || "https://music.youtube.com";
     
-    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}`);
+    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}, Last URL: ${lastUrl}`);
     return config;
   } catch (error) {
     console.log('Using default config settings');
@@ -70,7 +72,8 @@ async function saveConfig() {
     const config = {
       minimizeToTray: minimizeToTray,
       videoAdSkipperEnabled: videoAdSkipperEnabled,
-      VideoAdSkipSpeed: VideoAdSkipSpeed
+      VideoAdSkipSpeed: VideoAdSkipSpeed,
+      lastUrl: lastUrl
     };
     
     await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
@@ -577,7 +580,7 @@ function createMenu() {
             
             console.log('Restarting...');
             app.relaunch();
-            app.exit();
+            app.quit();
           }
         },
         { type: 'separator' },
@@ -748,7 +751,35 @@ async function createWindow() {
             console.log('Could not pause audio:', e);
           }
         `);
+        let currentUrl = mainWindow.webContents.getURL();
         
+        if (currentUrl.includes('music.youtube.com/watch')) {
+          
+          // Execute script to get current time in seconds
+          const currentTimeValue = await mainWindow.webContents.executeJavaScript(`
+              // Get the 'value' attribute of the progress bar slider, which is the time in seconds
+              document.querySelector('#progress-bar > #sliderContainer > div > #sliderBar')?.getAttribute('value');
+          `);
+
+          // Convert the value to an integer
+          const timeInSeconds = parseInt(currentTimeValue, 10);
+
+          // Check if the time is a valid positive number
+          if (!isNaN(timeInSeconds) && timeInSeconds > 0) {
+            // Use URL object for clean parameter management
+            try {
+              const urlObject = new URL(currentUrl);
+              urlObject.searchParams.set('t', timeInSeconds);
+              currentUrl = urlObject.toString();
+            } catch (e) {
+              console.log('Error modifying URL with time parameter:', e.message);
+            }
+          }
+        }
+
+        lastUrl = currentUrl;
+        await saveConfig();
+        console.log(`URL saved: ${lastUrl}`);
         mainWindow.destroy();
         app.quit();
       } catch (error) {
@@ -759,7 +790,15 @@ async function createWindow() {
     }
   });
 
-  mainWindow.loadURL("https://music.youtube.com");
+  const youtubeMusicDomain = 'music.youtube.com';
+
+  if (lastUrl.includes(youtubeMusicDomain)) {
+    mainWindow.loadURL(lastUrl);
+    console.log(`Loading last visited URL: ${lastUrl}`);
+  } else {
+    mainWindow.loadURL(`https://${youtubeMusicDomain}`);
+    console.log('Loading default URL: https://music.youtube.com');
+  }
   
   // Hide cast buttons
   mainWindow.webContents.once('did-finish-load', () => {
