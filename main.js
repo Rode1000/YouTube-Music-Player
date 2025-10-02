@@ -669,6 +669,15 @@ async function createWindow() {
     },
   });
 
+  // Enable F12 and Ctrl+Shift+i for DevTools - for Advanced Users
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' || 
+        (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
+
   createMenu();
 
   // Load filters in background
