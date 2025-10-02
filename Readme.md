@@ -39,7 +39,6 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
    - Once installed, you can start the app and enjoy YouTube Music on your desktop!
 
 ### Linux
-- Make sure fuse2 is installed
 - Download the AppImage or deb package from releases
 
 > ### Notes
