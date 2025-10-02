@@ -12,6 +12,11 @@ let tray;
 let minimizeToTray = false;
 let aboutWindow;
 
+// Video ad skipping settings
+let videoAdSkipperEnabled = true;
+let VideoAdSkipSpeed = 2;
+let VideoAdSkipInterval = 200;
+
 // Support for multiple languages
 const i18n = {};
 
@@ -49,8 +54,10 @@ async function loadConfig() {
     const config = JSON.parse(configData);
     
     minimizeToTray = config.minimizeToTray || false;
+    videoAdSkipperEnabled = config.videoAdSkipperEnabled !== false;
+    VideoAdSkipSpeed = config.VideoAdSkipSpeed || 2;
     
-    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}`);
+    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}`);
     return config;
   } catch (error) {
     console.log('Using default config settings');
@@ -61,7 +68,9 @@ async function loadConfig() {
 async function saveConfig() {
   try {
     const config = {
-      minimizeToTray: minimizeToTray
+      minimizeToTray: minimizeToTray,
+      videoAdSkipperEnabled: videoAdSkipperEnabled,
+      VideoAdSkipSpeed: VideoAdSkipSpeed
     };
     
     await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
@@ -231,6 +240,21 @@ ipcMain.handle('get-about-info', () => {
         github_link: t('github_link_text')
     }
   };
+});
+
+// Handle video ad skipper settings
+ipcMain.handle('get-ad-skipper-settings', () => {
+  return {
+    enabled: videoAdSkipperEnabled,
+    speed: VideoAdSkipSpeed
+  };
+});
+
+ipcMain.on('save-ad-skipper-settings', async (event, settings) => {
+  videoAdSkipperEnabled = settings.enabled;
+  VideoAdSkipSpeed = settings.speed;
+  await saveConfig();
+  console.log(`Video ad skipper settings updated: Enabled=${videoAdSkipperEnabled}, Speed=${VideoAdSkipSpeed}x`);
 });
 
 ipcMain.on('open-external-link', (event, url) => {
@@ -760,6 +784,84 @@ async function createWindow() {
         visibility: hidden !important;
       }
     `);
+
+    // Inject JavaScript to auto-skip video ads
+    if (videoAdSkipperEnabled) {
+    mainWindow.webContents.executeJavaScript(`
+      (function() {
+        console.log('Video ad skipper initialized (Speed: ${VideoAdSkipSpeed}x, Interval: ${VideoAdSkipInterval}ms)');
+        
+        // Function to skip video ads
+        function skipVideoAd() {
+          try {
+            // Look for skip button (various selectors)
+            const skipSelectors = [
+              '.ytp-ad-skip-button',
+              '.ytp-ad-skip-button-modern',
+              '.ytp-skip-ad-button',
+              '.ytp-ad-skip-button-container button',
+              'button.ytp-ad-skip-button',
+              '[class*="skip"][class*="button"]'
+            ];
+            
+            for (const selector of skipSelectors) {
+              const skipButton = document.querySelector(selector);
+              if (skipButton) {
+                // Check if button is clickable (not disabled and visible)
+                const isClickable = !skipButton.disabled && 
+                                   skipButton.offsetParent !== null &&
+                                   !skipButton.hasAttribute('disabled');
+                
+                if (isClickable) {
+                  skipButton.click();
+                  console.log('lol - Skipped video ad');
+                  return true;
+                }
+              }
+            }
+            
+            // If skip button has countdown, try to fast-forward the video
+            const video = document.querySelector('video');
+            if (video) {
+              const player = document.querySelector('.html5-video-player');
+              
+              // Check if ad is showing
+              if (player && (player.classList.contains('ad-showing') || 
+                            player.classList.contains('ad-interrupting'))) {
+                
+                // Fast-forward to near the end (leave 0.1s to trigger skip button)
+                if (video.duration && video.duration > 0 && !isNaN(video.duration)) {
+                  video.currentTime = Math.max(0, video.duration - 0.1);
+                  video.playbackRate = ${VideoAdSkipSpeed}; // Speed up but not too fast
+                  console.log('lol - Fast-forwarding through ad at (Speed=${VideoAdSkipSpeed}x)');
+                  return true;
+                }
+              }
+            }
+          } catch (e) {
+            // Silently fail
+          }
+          return false;
+        }
+        
+        // Run skip check frequently
+        setInterval(skipVideoAd, ${VideoAdSkipInterval});
+        
+        // Also run on various events
+        document.addEventListener('DOMContentLoaded', skipVideoAd);
+        window.addEventListener('load', skipVideoAd);
+        
+        // Watch for DOM changes (when ad elements appear)
+        const observer = new MutationObserver(skipVideoAd);
+        observer.observe(document.body, { 
+          childList: true, 
+          subtree: true 
+        });
+      })();
+    `);
+    }else{
+      console.log('Video ad skipper disabled by user');
+    }
     console.log('Cast buttons hidden');
   });
 }

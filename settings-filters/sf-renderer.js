@@ -18,6 +18,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let allFilters = [];
 
+    //load ad skipper settings
+    const adSkipperEnabled = document.getElementById('ad-skipper-enabled');
+    const adSkipSpeed = document.getElementById('ad-skip-speed');
+    const adSkipSpeedValue = document.getElementById('ad-skip-speed-value');
+
+    const adSkipperSettings = await window.electronAPI.getAdSkipperSettings();
+    adSkipperEnabled.checked = adSkipperSettings.enabled;
+    adSkipSpeed.value = adSkipperSettings.speed;
+    adSkipSpeedValue.textContent = `${adSkipperSettings.speed}x`;
+
+    adSkipSpeed.addEventListener('input', (e) => {
+        adSkipSpeedValue.textContent = `${e.target.value}x`;
+    });
+
     const renderFilters = () => {
         filterListDiv.innerHTML = '';
         allFilters.forEach((filter, index) => {
@@ -92,6 +106,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             enabled: f.enabled
         }));
         window.electronAPI.saveFilters(userFiltersToSave);
+
+        //save ad skipper settings
+        window.electronAPI.saveAdSkipperSettings({
+            enabled: adSkipperEnabled.checked,
+            speed: parseInt(adSkipSpeed.value)
+        });
+
         window.close();
     });
 

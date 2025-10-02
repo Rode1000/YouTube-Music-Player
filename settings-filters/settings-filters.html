@@ -10,6 +10,26 @@
     <main class="container">
         <form id="filter-form">
             <section id="filter-list"></section>
+            <!-- Video Ad Skipper Settings -->
+            <section id="ad-skipper-settings">
+                <h3 id="ad-skipper-title"><i class="bi bi-fast-forward-fill"></i> Video Ad Skipper Settings</h3>
+                <div class="ad-skipper-option">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="ad-skipper-enabled">
+                        <span id="ad-skipper-enabled-text">Enable automatic video ad skipping</span>
+                    </label>
+                </div>
+                <div class="speed-control">
+                    <label for="ad-skip-speed" id="ad-skip-speed-label" class="speed-label">Skip Speed:</label>
+                    <div class="slider-container">
+                        <input type="range" id="ad-skip-speed" min="2" max="16" step="2" value="16">
+                        <span id="ad-skip-speed-value" class="speed-value">16x</span>
+                    </div>
+                    <p class="hint-text" id="ad-skip-speed-hint">
+                        Lower speeds (2-4x) are more human-like. Higher speeds (8-16x) skip faster.
+                    </p>
+                </div>
+            </section>
             <footer>
                 <a href="#" id="add-filter" role="button" class="outline add-filter-green">
                     <i class="bi bi-plus-circle"></i> 

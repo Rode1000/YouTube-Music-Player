@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   resetFilters: () => ipcRenderer.send('reset-filters'),
   closeWindow: () => ipcRenderer.send('close-window'),
   openExternal: (url) => ipcRenderer.send('open-external-link', url),
+  getAdSkipperSettings: () => ipcRenderer.invoke('get-ad-skipper-settings'),
+  saveAdSkipperSettings: (settings) => ipcRenderer.send('save-ad-skipper-settings', settings),
   getTranslations: () => ipcRenderer.invoke('get-translations', [
       'ad_filter_config_title',
       'enabled',
