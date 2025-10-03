@@ -9,12 +9,23 @@
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux"
   },
-  "keywords": [],
+  "keywords": [
+    "youtube",
+    "music",
+    "player",
+    "electron",
+    "desktop",
+    "audio",
+    "streaming",
+    "youtube-music",
+    "music-player",
+    "media-player"
+  ],
   "author": {
     "name": "nubsuki",
     "email": "nubsuki@proton.me"
   },
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "electron": "^38.1.2",
     "electron-builder": "^24.6.4"
