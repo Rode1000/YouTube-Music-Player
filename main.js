@@ -598,15 +598,7 @@ function createMenu() {
           label: t('check_for_updates'),
           click: async () => {
             try {
-              // Show checking message
-              dialog.showMessageBox(mainWindow, {
-                type: 'info',
-                title: t('checking_for_updates'),
-                message: t('checking_for_updates'),
-                buttons: ['OK']
-              });
-
-              // Check for updates
+              // Check for updates 
               const result = await autoUpdater.checkForUpdates();
               
               if (result && result.updateInfo && result.updateInfo.version !== APP_VERSION) {
@@ -645,7 +637,7 @@ function createMenu() {
               dialog.showMessageBox(mainWindow, {
                 type: 'error',
                 title: t('update_error'),
-                message: error.message,
+                message: `Error checking for updates: ${error.message}`,
                 buttons: ['OK']
               });
             }
