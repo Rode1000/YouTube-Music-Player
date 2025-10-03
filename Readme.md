@@ -17,11 +17,18 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
 
 - **Desktop YouTube Music**: A dedicated YouTube Music app with no distractions.
 - **Ad Blocking**: Blocks YouTube ads using multiple filter lists (EasyList, EasyPrivacy, uBlock filters).
+- **Multi-language Support**: Automatically detects system locale with support for English and Spanish.
 - **Minimize to Tray**: Close the app window to minimize it to the system tray and keep music playing (Remembers last toggle state).
-- **Smart Caching**: Caches filter lists and updates once a day for better performance.
+- **Smart Caching**: Caches filter lists and updates every 24h for better performance.
 - **Cast Button Removal**: Automatically hides cast/connect buttons for cleaner interface.
 - **Start with Windows**: Launch automatically on system startup.
-- **Filter Settings**: A new windows to configure filters.
+- **Custom Filter Lists**: Add, remove, enable/disable custom ad filter lists with persistent configuration.
+- **Manual Filter Update**: Manually trigger filter list updates from the menu without waiting 24 hours.
+- **Video Ad Skipper**: Automatically skips video ads with configurable speed (2-16x).
+- **Keyboard Shortcuts**: 
+  - `Ctrl+H` - Hide to tray (when minimize to tray is enabled)
+  - `Ctrl+Q` - Quit application
+  - `F12` or `Ctrl+Shift+I` - Developer Tools
 
 ---
 

@@ -4,7 +4,6 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require('path');
 const fs = require('fs').promises;
-const os = require('os');
 
 let snfe;
 let mainWindow;
@@ -45,7 +44,7 @@ if (!gotTheLock) {
 }
 
 // Cache settings - 24 hour expiration
-const CACHE_DIR = path.join(os.tmpdir(), 'ytmp-filters');
+const CACHE_DIR = path.join(app.getPath('userData'), 'ytmp-filters');
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 async function loadConfig() {
