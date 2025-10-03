@@ -1,5 +1,6 @@
-const { app, BrowserWindow, session, Menu, Tray, shell } = require("electron");
+const { app, BrowserWindow, session, Menu, Tray, shell, dialog } = require("electron");
 const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
+const { autoUpdater } = require("electron-updater");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require('path');
@@ -576,7 +577,7 @@ function createMenu() {
             
             console.log('Restarting...');
             app.relaunch();
-            app.exit();
+            app.quit();
           }
         },
         { type: 'separator' },
@@ -593,6 +594,55 @@ function createMenu() {
     {
       label: t('help'),
       submenu: [
+        {
+          label: t('check_for_updates'),
+          click: async () => {
+            try {
+              // Show checking message
+              dialog.showMessageBox(mainWindow, {
+                type: 'info',
+                title: t('checking_for_updates'),
+                message: t('checking_for_updates'),
+                buttons: ['OK']
+              });
+
+              // Check for updates
+              const result = await autoUpdater.checkForUpdates();
+              
+              if (result && result.updateInfo) {
+                // Update available - ask if they want to download
+                const updateResult = await dialog.showMessageBox(mainWindow, {
+                  type: 'question',
+                  title: t('update_available'),
+                  message: `A new version (${result.updateInfo.version}) is available. Would you like to download it now?`,
+                  buttons: ['Download Now', 'Not Now'],
+                  defaultId: 0,
+                  cancelId: 1
+                });
+
+                if (updateResult.response === 0) {
+                  // Choose to download
+                  autoUpdater.downloadUpdate();
+                }
+              } else {
+                // No updates available
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: t('no_updates_available'),
+                  message: t('no_updates_available_message'),
+                  buttons: ['OK']
+                });
+              }
+            } catch (error) {
+              dialog.showMessageBox(mainWindow, {
+                type: 'error',
+                title: t('update_error'),
+                message: error.message,
+                buttons: ['OK']
+              });
+            }
+          }
+        },
         {
           label: t('about'),
           click: () => {
@@ -866,6 +916,55 @@ async function createWindow() {
 }
 
 handleStartupSettings();
+
+
+// Updater event handlers
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available:', info);
+});
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater:', err);
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: t('update_error'),
+      message: `Error: ${err.message}`,
+      buttons: ['OK']
+    });
+  }
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info);
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: t('update_ready'),
+      message: t('update_ready_message'),
+      buttons: [t('restart_now'), t('later')]
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  }
+});
 
 if (gotTheLock) {
   app.whenReady().then(createWindow);

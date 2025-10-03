@@ -3,6 +3,10 @@
   "version": "1.6.1",
   "description": "YouTube Music Player",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nubsuki/YouTube-Music-Player"
+  },
   "scripts": {
     "start": "electron .",
     "build:all": "electron-builder --linux --win",
@@ -40,6 +44,11 @@
       "**/*",
       "node_modules/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "nubsuki",
+      "repo": "YouTube-Music-Player"
+    },
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -62,6 +71,7 @@
   },
   "dependencies": {
     "@gorhill/ubo-core": "^0.1.30",
+    "electron-updater": "^6.6.2",
     "node-fetch": "^3.3.2"
   }
 }
