@@ -609,7 +609,7 @@ function createMenu() {
               // Check for updates
               const result = await autoUpdater.checkForUpdates();
               
-              if (result && result.updateInfo) {
+              if (result && result.updateInfo && result.updateInfo.version !== APP_VERSION) {
                 // Update available - ask if they want to download
                 const updateResult = await dialog.showMessageBox(mainWindow, {
                   type: 'question',
@@ -621,7 +621,7 @@ function createMenu() {
                 });
 
                 if (updateResult.response === 0) {
-                  // Choose to download
+                  // User chose to download
                   autoUpdater.downloadUpdate();
                 }
               } else {
