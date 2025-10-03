@@ -58,7 +58,7 @@ Current version ![GitHub release](https://img.shields.io/github/v/release/nubsuk
 
 **Important:**
 If you’re upgrading from **v1.4.0** or **v1.5.0** to a newer version of this app, **make sure to delete** the folder at
-`%appdata% > Roaming > youtube-music`
+`%appdata% > Roaming > youtube-music-player`
 This helps avoid conflicts or unexpected behavior from older versions.
 
 ---
