@@ -57,7 +57,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "YouTube Music"
+      "shortcutName": "YouTube Music",
+      "artifactName": "YouTube-Music-Setup-${version}.${ext}"
     },
     "linux": {
       "maintainer": "nubsuki <nubsuki@proton.me>",

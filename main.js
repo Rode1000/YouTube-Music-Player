@@ -610,7 +610,7 @@ function createMenu() {
               const result = await autoUpdater.checkForUpdates();
               
               if (result && result.updateInfo && result.updateInfo.version !== APP_VERSION) {
-                // Update available - ask if they want to download
+                // Update available
                 const updateResult = await dialog.showMessageBox(mainWindow, {
                   type: 'question',
                   title: t('update_available'),
@@ -621,7 +621,15 @@ function createMenu() {
                 });
 
                 if (updateResult.response === 0) {
-                  // User chose to download
+                  // show progress dialog
+                  dialog.showMessageBox(mainWindow, {
+                    type: 'info',
+                    title: 'Downloading Update',
+                    message: 'Downloading update in the background...',
+                    buttons: ['OK']
+                  });
+                  
+                  // Start download
                   autoUpdater.downloadUpdate();
                 }
               } else {
