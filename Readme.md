@@ -29,6 +29,7 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
   - `Ctrl+H` - Hide to tray (when minimize to tray is enabled)
   - `Ctrl+Q` - Quit application
   - `F12` or `Ctrl+Shift+I` - Developer Tools
+- **In-App Updates**: Check for and install updates directly from the app without manual downloads.
 
 ---
 
@@ -49,10 +50,16 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
 - Make sure fuse is installed
 - Download the AppImage or deb package from releases
 
-> ### Notes
-> **Worried about account bans due to ad blocking?**
-> Use a **burner account/email** or stick with **v1.4.0** — that version doesn't include any ad-blocker functionality.
-> Current version is **v1.6.0** with enhanced ad blocking features with uBlock Origin integration.
+---
+ ### Notes
+ **Worried about account bans due to ad blocking?**
+ Use a **burner account/email** or stick with **v1.4.0** that version doesn't include any ad-blocker functionality.
+Current version ![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player?style=flat-square) with enhanced ad blocking features with uBlock Origin integration.
+
+**Important:**
+If you’re upgrading from **v1.4.0** or **v1.5.0** to a newer version of this app, **make sure to delete** the folder at
+`%appdata% > Roaming > youtube-music`
+This helps avoid conflicts or unexpected behavior from older versions.
 
 ---
 
