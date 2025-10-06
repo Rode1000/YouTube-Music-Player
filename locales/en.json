@@ -25,5 +25,7 @@
   "about_app_description": "A simple desktop application for YouTube Music with ad blocking capabilities.",
   "accept": "Accept & Close",
   "version_label": "Version {0}",
-  "github_link_text": "Project on GitHub"
+  "github_link_text": "Project on GitHub",
+  "reopen_last_song": "Reopen Last Song",
+  "resume_playback": "Resume Playback Progress"
 }
