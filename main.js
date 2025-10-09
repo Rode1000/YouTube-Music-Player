@@ -1,10 +1,10 @@
-const { app, BrowserWindow, session, Menu, Tray, shell } = require("electron");
+const { app, BrowserWindow, session, Menu, Tray, shell, dialog } = require("electron");
 const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
+const { autoUpdater } = require("electron-updater");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require('path');
 const fs = require('fs').promises;
-const os = require('os');
 
 let snfe;
 let mainWindow;
@@ -16,6 +16,9 @@ let aboutWindow;
 let videoAdSkipperEnabled = true;
 let VideoAdSkipSpeed = 2;
 let VideoAdSkipInterval = 200;
+
+// Auto continue still listening settings
+let autoContinueListeningInterval = 500;
 
 // Support for multiple languages
 const i18n = {};
@@ -45,7 +48,7 @@ if (!gotTheLock) {
 }
 
 // Cache settings - 24 hour expiration
-const CACHE_DIR = path.join(os.tmpdir(), 'ytmp-filters');
+const CACHE_DIR = path.join(app.getPath('userData'), 'ytmp-filters');
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 async function loadConfig() {
@@ -577,7 +580,7 @@ function createMenu() {
             
             console.log('Restarting...');
             app.relaunch();
-            app.exit();
+            app.quit();
           }
         },
         { type: 'separator' },
@@ -594,6 +597,55 @@ function createMenu() {
     {
       label: t('help'),
       submenu: [
+        {
+          label: t('check_for_updates'),
+          click: async () => {
+            try {
+              // Check for updates 
+              const result = await autoUpdater.checkForUpdates();
+              
+              if (result && result.updateInfo && result.updateInfo.version !== APP_VERSION) {
+                // Update available
+                const updateResult = await dialog.showMessageBox(mainWindow, {
+                  type: 'question',
+                  title: t('update_available'),
+                  message: `A new version (${result.updateInfo.version}) is available. Would you like to download it now?`,
+                  buttons: ['Download Now', 'Not Now'],
+                  defaultId: 0,
+                  cancelId: 1
+                });
+
+                if (updateResult.response === 0) {
+                  // show progress dialog
+                  dialog.showMessageBox(mainWindow, {
+                    type: 'info',
+                    title: 'Downloading Update',
+                    message: 'Downloading update in the background...',
+                    buttons: ['OK']
+                  });
+                  
+                  // Start download
+                  autoUpdater.downloadUpdate();
+                }
+              } else {
+                // No updates available
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: t('no_updates_available'),
+                  message: t('no_updates_available_message'),
+                  buttons: ['OK']
+                });
+              }
+            } catch (error) {
+              dialog.showMessageBox(mainWindow, {
+                type: 'error',
+                title: t('update_error'),
+                message: `Error checking for updates: ${error.message}`,
+                buttons: ['OK']
+              });
+            }
+          }
+        },
         {
           label: t('about'),
           click: () => {
@@ -784,6 +836,7 @@ async function createWindow() {
         visibility: hidden !important;
       }
     `);
+    console.log('Cast buttons hidden');
 
     // Inject JavaScript to auto-skip video ads
     if (videoAdSkipperEnabled) {
@@ -862,11 +915,133 @@ async function createWindow() {
     }else{
       console.log('Video ad skipper disabled by user');
     }
-    console.log('Cast buttons hidden');
+
+    // Inject JavaScript to auto-continue listening
+    mainWindow.webContents.executeJavaScript(`
+      (function() {
+        const checkInterval = ${autoContinueListeningInterval};
+        let lastDismissTime = 0;
+
+        function dismissDialog() {
+          try {
+            // Prevent rapid re-clicking
+            const now = Date.now();
+            if (now - lastDismissTime < 2000) return false;
+        
+            // Multiple dialog selectors
+            const dialogSelectors = [
+              'tp-yt-paper-dialog.style-scope',
+              'ytmusic-you-there-renderer',
+              'tp-yt-paper-dialog[role="dialog"]'
+            ];
+        
+            let dialog = null;
+            for (const selector of dialogSelectors) {
+              const element = document.querySelector(selector);
+              if (element && window.getComputedStyle(element).display !== 'none' && element.offsetParent !== null) {
+                dialog = element;
+                break;
+              }
+            }
+            
+            if (!dialog) return false;
+        
+            // Check dialog content
+            const dialogText = dialog.textContent?.toLowerCase() || '';
+            const isKeepListeningDialog = dialogText.includes('still listening') || 
+                                           dialogText.includes('still there') || 
+                                           dialogText.includes('you there');
+
+            if (!isKeepListeningDialog) return false;
+
+            // Multiple button selectors
+            const buttonSelectors = [
+              'yt-button-renderer.ytmusic-you-there-renderer',
+              'tp-yt-paper-button#button',
+              '[aria-label*="Yes" i]',
+              '[aria-label*="Continue" i]',
+              'button'
+            ];
+
+            for (const selector of buttonSelectors) {
+              const confirmButton = dialog.querySelector(selector);
+              if (confirmButton && confirmButton.offsetParent !== null && !confirmButton.disabled) {
+                confirmButton.click();
+                lastDismissTime = now;
+                console.log('Auto-dismissed "Keep listening?" dialog');
+                return true;
+              }
+            }
+          } catch (e) {
+            console.error('Error in dismissDialog:', e);
+          }
+          return false;
+        }
+
+        // Check periodically
+        setInterval(dismissDialog, checkInterval);
+
+        // Watch for dialog appearing
+        const observer = new MutationObserver(dismissDialog);
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        console.log('Auto-continue listening feature initialized');
+      })();
+    `);
+    
   });
 }
 
 handleStartupSettings();
+
+
+// Updater event handlers
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available:', info);
+});
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater:', err);
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: t('update_error'),
+      message: `Error: ${err.message}`,
+      buttons: ['OK']
+    });
+  }
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info);
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: t('update_ready'),
+      message: t('update_ready_message'),
+      buttons: [t('restart_now'), t('later')]
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  }
+});
 
 if (gotTheLock) {
   app.whenReady().then(createWindow);
