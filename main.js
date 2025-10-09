@@ -15,10 +15,10 @@ let aboutWindow;
 // Video ad skipping settings
 let videoAdSkipperEnabled = true;
 let VideoAdSkipSpeed = 2;
-let autoContinueListeningInterval = 200;
+let VideoAdSkipInterval = 200;
 
 // Auto continue still listening settings
-let VideoDialogPauseInterval = 5000;
+let autoContinueListeningInterval = 500;
 
 // Support for multiple languages
 const i18n = {};
