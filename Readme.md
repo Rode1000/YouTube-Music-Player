@@ -32,7 +32,6 @@ A simple desktop application for **YouTube Music** with ad blocking capabilities
   - `Ctrl+Q` - Quit application
   - `F12` or `Ctrl+Shift+I` - Developer Tools
 - **In-App Updates**: Check for and install updates directly from the app without manual downloads.
-- 
 
 ---
 
