@@ -680,7 +680,7 @@ function createMenu() {
               dialog.showMessageBox(mainWindow, {
                 type: 'error',
                 title: t('update_error'),
-                message: t('error_d', err.message),
+                message: t('error_d', error.message),
                 buttons: [t('ok')]
               });
             }
@@ -1112,7 +1112,7 @@ autoUpdater.on('error', (err) => {
       type: 'error',
       title: t('update_error'),
       message: `Error: ${err.message}`,
-      buttons: ['OK']
+      buttons: [t('ok')]
     });
   }
 });
