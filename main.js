@@ -1043,14 +1043,6 @@ async function createWindow() {
             
             if (!dialog) return false;
         
-            // Check dialog content
-            const dialogText = dialog.textContent?.toLowerCase() || '';
-            const isKeepListeningDialog = dialogText.includes('still listening') || 
-                                           dialogText.includes('still there') || 
-                                           dialogText.includes('you there');
-
-            if (!isKeepListeningDialog) return false;
-
             // Multiple button selectors
             const buttonSelectors = [
               'yt-button-renderer.ytmusic-you-there-renderer',
