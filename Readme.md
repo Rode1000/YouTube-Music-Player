@@ -23,7 +23,7 @@ A simple desktop application for **YouTube Music**.
 - **Smart Caching**: Caches filter lists and updates every 24h for better performance.
 - **Cast Button Removal**: Automatically hides cast/connect buttons for cleaner interface.
 - **Start with Windows**: Launch automatically on system startup.
-- **Custom Filter Lists**: Add, remove, enable/disable custom ad filter lists with persistent configuration.
+- **Custom Filter Lists**: Add, remove, enable/disable custom filter lists with persistent configuration.
 - **Manual Filter Update**: Manually trigger filter list updates from the menu without waiting 24 hours.
 - **Simple Skipper**: Automatically skips with configurable speed (2-16x).
 - **Auto-Continue Listening**: Automatically dismisses the "Still listening?" dialog to keep music playing without interruption.
