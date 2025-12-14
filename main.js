@@ -15,7 +15,7 @@ let lastUrl = "https://music.youtube.com";
 let aboutWindow;
 
 // Video ad skipping settings
-let videoAdSkipperEnabled = true;
+let videoAdSkipperEnabled = false;
 let VideoAdSkipSpeed = 2;
 let VideoAdSkipInterval = 200;
 
@@ -57,7 +57,7 @@ async function loadConfig() {
     const config = JSON.parse(configData);
     
     minimizeToTray = config.minimizeToTray || false;
-    videoAdSkipperEnabled = config.videoAdSkipperEnabled !== false;
+    videoAdSkipperEnabled = !!config.videoAdSkipperEnabled;
     VideoAdSkipSpeed = config.VideoAdSkipSpeed || 2;
     openLastSong = config.openLastSong !== undefined ? config.openLastSong : true;
     lastUrl = openLastSong ? (config.lastUrl || "https://music.youtube.com") : "https://music.youtube.com";

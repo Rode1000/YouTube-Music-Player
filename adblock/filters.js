@@ -12,13 +12,13 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000;
 const USER_FILTERS_FILE = path.join(app.getPath('userData'), 'user-filters.json');
 
 const defaultFilterLists = [
-  { name: 'easylist', url: 'https://easylist.to/easylist/easylist.txt', description: 'EasyList (Ad blocking)', enabled: true },
-  { name: 'easyprivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', description: 'EasyPrivacy (Privacy protection)', enabled: true },
-  { name: 'ublock-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt', description: 'uBlock filters (Enhanced ad blocking)', enabled: true },
-  { name: 'ublock-privacy', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt', description: 'uBlock Privacy filters', enabled: true },
-  { name: 'ublock-badware', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt', description: 'uBlock Badware protection', enabled: true },
-  { name: 'ublock-unbreak', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/unbreak.txt', description: 'unbreak sites broken as a result of 3rd-party filter lists enabled by default', enabled: true },
-  { name: 'ublock-Lite-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/ubol-filters.txt', description: 'Filters optimized for uBO Lite', enabled: true }
+  { name: 'easylist', url: 'https://easylist.to/easylist/easylist.txt', description: 'EasyList (Ad blocking)', enabled: false },
+  { name: 'easyprivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', description: 'EasyPrivacy (Privacy protection)', enabled: false },
+  { name: 'ublock-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt', description: 'uBlock filters (Enhanced ad blocking)', enabled: false },
+  { name: 'ublock-privacy', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt', description: 'uBlock Privacy filters', enabled: false },
+  { name: 'ublock-badware', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt', description: 'uBlock Badware protection', enabled: false },
+  { name: 'ublock-unbreak', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/unbreak.txt', description: 'unbreak sites broken as a result of 3rd-party filter lists.', enabled: false },
+  { name: 'ublock-Lite-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/ubol-filters.txt', description: 'Filters optimized for uBO Lite', enabled: false }
 ];
 
 async function ensureCacheDir() {
