@@ -4,6 +4,8 @@ const path = require('path');
 const fs = require('fs').promises;
 const { initializeFilterEngine: initFiltersExternal, setupWebRequestHandler: setupWRExternal, getUserFilters: getFiltersExternal, saveUserFilters: saveFiltersExternal, resetFilters: resetFiltersExternal } = require('./adblock/filters');
 const { injectVideoAdSkipper } = require('./adblock/videoAdSkipper');
+const { initDiscordRpc } = require('./integrations/discordRpc');
+require('dotenv').config();
 
 
 let mainWindow;
@@ -673,7 +675,8 @@ async function createWindow() {
     `);
     console.log('Cast buttons hidden');
 
-injectVideoAdSkipper(mainWindow.webContents, { enabled: videoAdSkipperEnabled, speed: VideoAdSkipSpeed, interval: VideoAdSkipInterval });
+    injectVideoAdSkipper(mainWindow.webContents, { enabled: videoAdSkipperEnabled, speed: VideoAdSkipSpeed, interval: VideoAdSkipInterval });
+    initDiscordRpc(mainWindow);
 
     // Inject JavaScript to auto-continue listening
     mainWindow.webContents.executeJavaScript(`
