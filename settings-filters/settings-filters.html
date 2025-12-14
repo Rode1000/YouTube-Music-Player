@@ -9,25 +9,24 @@
 <body>
     <main class="container">
         <form id="filter-form">
+            <h3 class="section-title"><i class="bi bi-funnel"></i> Filter List</h3>
             <section id="filter-list"></section>
             <!-- Video Ad Skipper Settings -->
             <section id="ad-skipper-settings">
-                <h3 id="ad-skipper-title"><i class="bi bi-fast-forward-fill"></i> Video Ad Skipper Settings</h3>
-                <div class="ad-skipper-option">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ad-skipper-enabled">
-                        <span id="ad-skipper-enabled-text">Enable automatic video ad skipping</span>
-                    </label>
-                </div>
-                <div class="speed-control">
-                    <label for="ad-skip-speed" id="ad-skip-speed-label" class="speed-label">Skip Speed:</label>
-                    <div class="slider-container">
-                        <input type="range" id="ad-skip-speed" min="2" max="16" step="2" value="16">
-                        <span id="ad-skip-speed-value" class="speed-value">16x</span>
+                <div class="filter-item ad-skipper-item">
+                    <div class="filter-content">
+                        <label>
+                            <input type="checkbox" id="ad-skipper-enabled">
+                            <span>Simple Skipper</span>
+                        </label>
+                        <div class="filter-desc">Automatically skips video ads at the selected speed.</div>
                     </div>
-                    <p class="hint-text" id="ad-skip-speed-hint">
-                        Lower speeds (2-4x) are more human-like. Higher speeds (8-16x) skip faster.
-                    </p>
+                    <select id="ad-skip-speed" aria-label="Skip Speed">
+                        <option value="2">2x</option>
+                        <option value="4">4x</option>
+                        <option value="6">6x</option>
+                        <option value="8">8x</option>
+                    </select>
                 </div>
             </section>
             <footer>

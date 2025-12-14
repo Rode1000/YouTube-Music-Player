@@ -24,17 +24,46 @@ body {
     border: 1px solid #333;
 }
 
+#filter-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.section-title {
+    color: #4dabf7;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.section-title i {
+    font-size: 1.1rem;
+    color: #4dabf7;
+}
+
 .filter-item {
-    display: grid;
-    grid-template-columns: auto 1fr 2fr auto;
+    display: inline-flex;
+    justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
-    margin-bottom: 0.5rem;
+    margin: 0;
     background: #2a2a2a;
     border-radius: 8px;
     border: 1px solid #404040;
     transition: all 0.2s ease;
+    flex: 0 0 280px;
+}
+
+.filter-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .filter-item:hover {
@@ -77,6 +106,20 @@ body {
     cursor: pointer;
     white-space: nowrap;
     color: #b0b0b0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.filter-desc {
+    font-size: 0.8rem;
+    color: #999;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .filter-item input[type="checkbox"] {
@@ -210,12 +253,11 @@ body {
 
 /* Video Ad Skipper Settings Section */
 #ad-skipper-settings {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%);
-    border-radius: 12px;
-    border: 1px solid #404040;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-top: 1rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 #ad-skipper-settings h3 {
@@ -287,49 +329,16 @@ body {
     margin-bottom: 0.75rem;
 }
 
-#ad-skip-speed {
-    flex: 1;
-    height: 6px;
-    background: linear-gradient(to right, #51cf66 0%, #4dabf7 50%, #ff6b6b 100%);
-    border-radius: 5px;
-    outline: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-}
-
-#ad-skip-speed::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: #4dabf7;
-    cursor: pointer;
-    border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(77, 171, 247, 0.5);
-    transition: all 0.2s ease;
-}
-
-#ad-skip-speed::-webkit-slider-thumb:hover {
-    background: #339af0;
-    transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(77, 171, 247, 0.7);
-}
-
-#ad-skip-speed::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: #4dabf7;
-    cursor: pointer;
-    border-radius: 50%;
-    border: none;
-    box-shadow: 0 2px 6px rgba(77, 171, 247, 0.5);
-    transition: all 0.2s ease;
-}
-
-#ad-skip-speed::-moz-range-thumb:hover {
-    background: #339af0;
-    transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(77, 171, 247, 0.7);
+select#ad-skip-speed {
+    height: 36px;
+    min-width: 80px;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 0 0.5rem;
+    -webkit-appearance: menulist;
+    appearance: menulist;
 }
 
 .speed-value {
