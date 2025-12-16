@@ -5,6 +5,7 @@ let client = null;
 let isConnected = false;
 let presenceUpdateInterval;
 let mainWindowRef = null;
+const appLaunchTimestamp = Math.floor(Date.now() / 1000);
 
 if (clientId) {
   rpc.register(clientId);
@@ -40,6 +41,7 @@ function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist
       state: `by ${Artist}`,
       largeImageKey: albumArtUrl || "icon",
       largeImageText: "YouTube Music",
+      startTimestamp: appLaunchTimestamp,
       instance: false,
       buttons,
     })
