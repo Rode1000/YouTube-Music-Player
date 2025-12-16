@@ -35,16 +35,24 @@ function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist
     url: "https://github.com/nubsuki/YouTube-Music-Player",
   });
 
+  const activity = {
+    largeImageText: "YouTube Music",
+    startTimestamp: appLaunchTimestamp,
+    instance: false,
+    buttons,
+  };
+
+  if (isPlaying) {
+    activity.details = Title;
+    activity.state = `by ${Artist}`;
+    activity.largeImageKey = albumArtUrl || "icon";
+  } else {
+    activity.details = "YouTube Music by nubsuki";
+    activity.largeImageKey = "icon";
+  }
+
   client
-    .setActivity({
-      details: Title,
-      state: `by ${Artist}`,
-      largeImageKey: albumArtUrl || "icon",
-      largeImageText: "YouTube Music",
-      startTimestamp: appLaunchTimestamp,
-      instance: false,
-      buttons,
-    })
+    .setActivity(activity)
     .catch((error) => {
       console.error("Error setting Discord activity:", error);
     });
