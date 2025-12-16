@@ -10,7 +10,7 @@ if (clientId) {
   rpc.register(clientId);
 }
 
-function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist", songUrl = "", albumArtUrl = "") {
+function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist", songUrl = "", albumArtUrl = "", isPlaying = false) {
   if (!client || !isConnected) return;
 
   const Title = songTitle && songTitle.toString().trim().length > 0 ? songTitle.toString().trim() : "Loading Song";
@@ -20,6 +20,20 @@ function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist
     Url = "https://music.youtube.com";
   }
 
+  const buttons = [];
+
+  if (isPlaying) {
+    buttons.push({
+      label: "Listen on YouTube Music",
+      url: Url,
+    });
+  }
+
+  buttons.push({
+    label: "Get App",
+    url: "https://github.com/nubsuki/YouTube-Music-Player",
+  });
+
   client
     .setActivity({
       details: Title,
@@ -27,16 +41,7 @@ function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist
       largeImageKey: albumArtUrl || "icon",
       largeImageText: "YouTube Music",
       instance: false,
-      buttons: [
-        {
-          label: "Listen on YouTube Music",
-          url: Url,
-        },
-        {
-          label: "Get App",
-          url: "https://github.com/nubsuki/YouTube-Music-Player",
-        },
-      ],
+      buttons,
     })
     .catch((error) => {
       console.error("Error setting Discord activity:", error);
@@ -49,11 +54,13 @@ async function getCurrentSongInfo() {
       return { songTitle: "Loading Song", artist: "Loading Artist", songUrl: "", albumArtUrl: "" };
     }
 
-    const { songTitle, artist, qartist, albumArtUrl } = await mainWindowRef.webContents.executeJavaScript(`
+    const { songTitle, artist, qartist, albumArtUrl, isPlaying } = await mainWindowRef.webContents.executeJavaScript(`
       (() => {
         const titleElement = document.querySelector('.title.ytmusic-player-bar');
         const bylineElement = document.querySelector('.byline.ytmusic-player-bar');
         const imgElement = document.querySelector('.image.style-scope.ytmusic-player-bar');
+        const audioElement = document.querySelector('audio');
+        const videoElement = document.querySelector('video');
 
         const rawTitle = titleElement ? titleElement.textContent.trim() : '';
         const rawArtist = bylineElement ? bylineElement.textContent.trim() : '';
@@ -72,7 +79,15 @@ async function getCurrentSongInfo() {
 
         const albumArtUrl = imgElement ? imgElement.src : '';
 
-        return { songTitle, artist, qartist, albumArtUrl };
+        let isPlaying = false;
+
+        if (audioElement && !audioElement.paused && !audioElement.ended && audioElement.currentTime > 0) {
+          isPlaying = true;
+        } else if (videoElement && !videoElement.paused && !videoElement.ended && videoElement.currentTime > 0) {
+          isPlaying = true;
+        }
+
+        return { songTitle, artist, qartist, albumArtUrl, isPlaying };
       })();
     `);
     const SongTitle = songTitle && songTitle.toString().trim().length > 0 ? songTitle.toString().trim() : "Loading Song";
@@ -86,10 +101,10 @@ async function getCurrentSongInfo() {
       songUrl = "https://music.youtube.com";
     }
 
-    return { songTitle: SongTitle, artist: Artist, songUrl, albumArtUrl };
+    return { songTitle: SongTitle, artist: Artist, songUrl, albumArtUrl, isPlaying };
   } catch (error) {
     console.error("Error fetching song info:", error);
-    return { songTitle: "Loading Song", artist: "Loading Artist", songUrl: "", albumArtUrl: "" };
+    return { songTitle: "Loading Song", artist: "Loading Artist", songUrl: "", albumArtUrl: "", isPlaying: false };
   }
 }
 
@@ -113,8 +128,8 @@ async function connectToDiscord() {
       setDiscordActivity();
 
       presenceUpdateInterval = setInterval(async () => {
-        const { songTitle, artist, songUrl, albumArtUrl } = await getCurrentSongInfo();
-        setDiscordActivity(songTitle, artist, songUrl, albumArtUrl);
+        const { songTitle, artist, songUrl, albumArtUrl, isPlaying } = await getCurrentSongInfo();
+        setDiscordActivity(songTitle, artist, songUrl, albumArtUrl, isPlaying);
       }, 12000);
     });
 
