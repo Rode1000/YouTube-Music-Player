@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { app, BrowserWindow, Menu, Tray, shell, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const path = require('path');
@@ -5,7 +6,6 @@ const fs = require('fs').promises;
 const { initializeFilterEngine: initFiltersExternal, setupWebRequestHandler: setupWRExternal, getUserFilters: getFiltersExternal, saveUserFilters: saveFiltersExternal, resetFilters: resetFiltersExternal } = require('./adblock/filters');
 const { injectVideoAdSkipper } = require('./adblock/videoAdSkipper');
 const { initDiscordRpc } = require('./integrations/discordRpc');
-require('dotenv').config();
 
 
 let mainWindow;
