@@ -32,6 +32,12 @@ A simple desktop application for **YouTube Music**.
   - `Ctrl+Q` - Quit application
   - `F12` or `Ctrl+Shift+I` - Developer Tools
 - **In-App Updates**: Check for and install updates directly from the app without manual downloads.
+- **Discord Rich Presence**: Shows your current song and artist on Discord with album art.
+
+## Discord Rich Presence
+
+![status](assets/ostatus.png)
+![pstatus](assets/pstatus.png)
 
 ---
 
