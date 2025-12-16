@@ -64,7 +64,7 @@ async function getCurrentSongInfo() {
       return { songTitle: "Loading Song", artist: "Loading Artist", songUrl: "", albumArtUrl: "" };
     }
 
-    const { songTitle, artist, qartist, albumArtUrl, isPlaying } = await mainWindowRef.webContents.executeJavaScript(`
+    const { songTitle, artist, albumArtUrl, isPlaying } = await mainWindowRef.webContents.executeJavaScript(`
       (() => {
         const titleElement = document.querySelector('.title.ytmusic-player-bar');
         const bylineElement = document.querySelector('.byline.ytmusic-player-bar');
