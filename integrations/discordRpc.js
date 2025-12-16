@@ -15,6 +15,10 @@ function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist
 
   const Title = songTitle && songTitle.toString().trim().length > 0 ? songTitle.toString().trim() : "Loading Song";
   const Artist = artist && artist.toString().trim().length > 0 ? artist.toString().trim() : "Loading Artist";
+  let Url = typeof songUrl === "string" ? songUrl.trim() : "";
+  if (!Url || Url.length > 512) {
+    Url = "https://music.youtube.com";
+  }
 
   client
     .setActivity({
@@ -26,7 +30,7 @@ function setDiscordActivity(songTitle = "Loading Song", artist = "Loading Artist
       buttons: [
         {
           label: "Listen on YouTube Music",
-          url: songUrl || "https://music.youtube.com",
+          url: Url,
         },
         {
           label: "Get App",
@@ -73,10 +77,14 @@ async function getCurrentSongInfo() {
     `);
     const SongTitle = songTitle && songTitle.toString().trim().length > 0 ? songTitle.toString().trim() : "Loading Song";
     const Artist = artist && artist.toString().trim().length > 0 ? artist.toString().trim() : "Loading Artist";
-    const QArtist = qartist && qartist.toString().trim().length > 0 ? qartist.toString().trim() : Artist;
 
-    const query = encodeURIComponent(`${SongTitle} by ${QArtist}`);
-    const songUrl = `https://music.youtube.com/search?q=${query}`;
+    let songUrl = mainWindowRef.webContents.getURL();
+    if (typeof songUrl !== "string" || songUrl.length === 0) {
+      songUrl = "https://music.youtube.com";
+    }
+    if (songUrl.length > 512) {
+      songUrl = "https://music.youtube.com";
+    }
 
     return { songTitle: SongTitle, artist: Artist, songUrl, albumArtUrl };
   } catch (error) {
