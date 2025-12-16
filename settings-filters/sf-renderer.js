@@ -21,16 +21,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     //load ad skipper settings
     const adSkipperEnabled = document.getElementById('ad-skipper-enabled');
     const adSkipSpeed = document.getElementById('ad-skip-speed');
-    const adSkipSpeedValue = document.getElementById('ad-skip-speed-value');
 
     const adSkipperSettings = await window.electronAPI.getAdSkipperSettings();
     adSkipperEnabled.checked = adSkipperSettings.enabled;
     adSkipSpeed.value = adSkipperSettings.speed;
-    adSkipSpeedValue.textContent = `${adSkipperSettings.speed}x`;
 
-    adSkipSpeed.addEventListener('input', (e) => {
-        adSkipSpeedValue.textContent = `${e.target.value}x`;
-    });
+    adSkipSpeed.addEventListener('change', () => {});
 
     const renderFilters = () => {
         filterListDiv.innerHTML = '';
@@ -47,31 +43,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             
             label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(translations.enabled));
+            label.appendChild(document.createTextNode(filter.name));
 
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.placeholder = translations.filter_name;
-            nameInput.value = filter.name;
-            nameInput.disabled = filter.isDefault;
-            nameInput.setAttribute('aria-label', translations.filter_name);
-            nameInput.addEventListener('input', (e) => {
-                filter.name = e.target.value;
-            });
+            const content = document.createElement('div');
+            content.className = 'filter-content';
+            content.appendChild(label);
 
-            const urlInput = document.createElement('input');
-            urlInput.type = 'text';
-            urlInput.placeholder = translations.filter_url;
-            urlInput.value = filter.url;
-            urlInput.disabled = filter.isDefault;
-            urlInput.setAttribute('aria-label', translations.filter_url);
-            urlInput.addEventListener('input', (e) => {
-                filter.url = e.target.value;
-            });
-            
-            filterItem.appendChild(label);
-            filterItem.appendChild(nameInput);
-            filterItem.appendChild(urlInput);
+            const desc = document.createElement('div');
+            desc.className = 'filter-desc';
+            desc.textContent = filter.description || 'Custom filter list';
+            content.appendChild(desc);
+
+            filterItem.appendChild(content);
 
             if (!filter.isDefault) {
                 const deleteButton = document.createElement('button');

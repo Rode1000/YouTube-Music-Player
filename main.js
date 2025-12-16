@@ -1,22 +1,23 @@
-const { app, BrowserWindow, session, Menu, Tray, shell, dialog } = require("electron");
-const { StaticNetFilteringEngine } = require("@gorhill/ubo-core");
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+const { app, BrowserWindow, Menu, Tray, shell, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require('path');
 const fs = require('fs').promises;
+const { initializeFilterEngine: initFiltersExternal, setupWebRequestHandler: setupWRExternal, getUserFilters: getFiltersExternal, saveUserFilters: saveFiltersExternal, resetFilters: resetFiltersExternal } = require('./adblock/filters');
+const { injectVideoAdSkipper } = require('./adblock/videoAdSkipper');
+const { initDiscordRpc } = require('./integrations/discordRpc');
 
-let snfe;
+
 let mainWindow;
 let tray;
 let minimizeToTray = false;
-let openLastSong = true;
+let openLastSong = false;
 let resumePlayback = false;
 let lastUrl = "https://music.youtube.com";
 let aboutWindow;
 
 // Video ad skipping settings
-let videoAdSkipperEnabled = true;
+let videoAdSkipperEnabled = false;
 let VideoAdSkipSpeed = 2;
 let VideoAdSkipInterval = 200;
 
@@ -27,7 +28,7 @@ let autoContinueListeningInterval = 500;
 const i18n = {};
 
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
-const USER_FILTERS_FILE = path.join(app.getPath('userData'), 'user-filters.json');
+
 const { version: APP_VERSION } = require('./package.json');
 
 // Single instance lock
@@ -50,9 +51,7 @@ if (!gotTheLock) {
   });
 }
 
-// Cache settings - 24 hour expiration
-const CACHE_DIR = path.join(app.getPath('userData'), 'ytmp-filters');
-const CACHE_DURATION = 24 * 60 * 60 * 1000;
+
 
 async function loadConfig() {
   try {
@@ -60,7 +59,7 @@ async function loadConfig() {
     const config = JSON.parse(configData);
     
     minimizeToTray = config.minimizeToTray || false;
-    videoAdSkipperEnabled = config.videoAdSkipperEnabled !== false;
+    videoAdSkipperEnabled = !!config.videoAdSkipperEnabled;
     VideoAdSkipSpeed = config.VideoAdSkipSpeed || 2;
     openLastSong = config.openLastSong !== undefined ? config.openLastSong : true;
     lastUrl = openLastSong ? (config.lastUrl || "https://music.youtube.com") : "https://music.youtube.com";
@@ -121,33 +120,6 @@ function t(key, ...args) {
   });
 }
 
-async function saveUserFilters(userFilters) {
-  try {
-    await fs.writeFile(USER_FILTERS_FILE, JSON.stringify(userFilters, null, 2), 'utf8');
-    console.log('User filters saved successfully');
-  } catch (error) {
-    console.log('Error saving user filters:', error.message);
-  }
-}
-
-async function loadUserFilters() {
-  try {
-    const filtersData = await fs.readFile(USER_FILTERS_FILE, 'utf8');
-    const userFilters = JSON.parse(filtersData);
-    console.log('User filters loaded successfully');
-    return userFilters;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      console.log('No user filters file found, using defaults.');
-      await saveUserFilters(filterLists);
-      return filterLists;
-    } else {
-      console.log('Error loading user filters:', error.message);
-    }
-    // Return an empty array if the file doesn't exist or an error occurs
-    return [];
-  }
-}
 
 function createSettingsWindow() {
   const settingsWindow = new BrowserWindow({
@@ -212,7 +184,7 @@ function createAboutWindow() {
 const { ipcMain } = require('electron');
 
 ipcMain.handle('get-filters', async () => {
-  return await loadUserFilters();
+  return await getFiltersExternal();
 });
 
 ipcMain.handle('get-translations', (event, keys) => {
@@ -224,17 +196,15 @@ ipcMain.handle('get-translations', (event, keys) => {
 });
 
 ipcMain.on('save-filters', async (event, newFilters) => {
-  await saveUserFilters(newFilters);
-  // Reload the filter engine with the new user settings
-  await initializeFilterEngine(true);
+  await saveFiltersExternal(newFilters);
+  await initFiltersExternal(true);
 });
 
 ipcMain.on('reset-filters', async (event) => {
   try {
-      await saveUserFilters(filterLists);
+      await resetFiltersExternal();
       console.log('User filters reset to default successfully.');
-      // Re-initialize the filter engine to apply the changes immediately
-      await initializeFilterEngine(true);
+      await initFiltersExternal(true);
   } catch (error) {
       console.log('Error resetting user filters:', error.message);
   }
@@ -284,50 +254,7 @@ ipcMain.on('resize-about-window', (event, width, height) => {
   }
 });
 
-const filterLists = [
-  {
-    name: "easylist",
-    url: "https://easylist.to/easylist/easylist.txt",
-    description: "EasyList (Ad blocking)",
-    enabled: true,
-  },
-  {
-    name: "easyprivacy",
-    url: "https://easylist.to/easylist/easyprivacy.txt",
-    description: "EasyPrivacy (Privacy protection)",
-    enabled: true,
-  },
-  {
-    name: "ublock-filters",
-    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
-    description: "uBlock filters (Enhanced ad blocking)",
-    enabled: true,
-  },
-  {
-    name: "ublock-privacy",
-    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
-    description: "uBlock Privacy filters",
-    enabled: true,
-  },
-  {
-    name: "ublock-badware",
-    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
-    description: "uBlock Badware protection",
-    enabled: true,
-  },
-  {
-    name: "ublock-unbreak",
-    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/unbreak.txt",
-    description: "unbreak sites broken as a result of 3rd-party filter lists enabled by default",
-    enabled: true,
-  },
-  {
-    name: "ublock-Lite-filters",
-    url: "https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/ubol-filters.txt",
-    description: "Filters optimized for uBO Lite",
-    enabled: true,
-  }
-];
+
 
 function createTray() {
   if (tray) return;
@@ -403,131 +330,7 @@ function toggleResumeBehavior(enabled) {
   console.log(`Resume playback: ${enabled ? 'Enabled' : 'Disabled'}`);
 }
 
-async function ensureCacheDir() {
-  try {
-    await fs.mkdir(CACHE_DIR, { recursive: true });
-  } catch (error) {
-    console.log('Error creating cache directory:', error.message);
-  }
-}
-
-function getCacheFilePath(filterName) {
-  return path.join(CACHE_DIR, `${filterName}.txt`);
-}
-
-function getCacheMetaPath(filterName) {
-  return path.join(CACHE_DIR, `${filterName}.meta.json`);
-}
-
-// Check if cache is still valid (24 hours)
-async function isCacheValid(filterName) {
-  try {
-    const metaPath = getCacheMetaPath(filterName);
-    const metaData = await fs.readFile(metaPath, 'utf8');
-    const { timestamp } = JSON.parse(metaData);
-    return (Date.now() - timestamp) < CACHE_DURATION;
-  } catch (error) {
-    return false;
-  }
-}
-
-async function loadFromCache(filterName) {
-  try {
-    const cacheFilePath = getCacheFilePath(filterName);
-    const content = await fs.readFile(cacheFilePath, 'utf8');
-    return content;
-  } catch (error) {
-    return null;
-  }
-}
-
-async function saveToCache(filterName, content) {
-  try {
-    await ensureCacheDir();
-    
-    const cacheFilePath = getCacheFilePath(filterName);
-    const metaPath = getCacheMetaPath(filterName);
-    
-    await fs.writeFile(cacheFilePath, content, 'utf8');
-    await fs.writeFile(metaPath, JSON.stringify({ 
-      timestamp: Date.now(),
-      filterName 
-    }), 'utf8');
-    
-    console.log(`${filterName} cached`);
-  } catch (error) {
-    console.log(`Error caching ${filterName}:`, error.message);
-  }
-}
-
-async function downloadFilter(filterList) {
-  try {
-    console.log(`Downloading ${filterList.description}...`);
-    const response = await fetch(filterList.url);
-    if (response.ok) {
-      const content = await response.text();
-      await saveToCache(filterList.name, content);
-      console.log(`${filterList.description} downloaded`);
-      return content;
-    } else {
-      console.log(`Failed to download ${filterList.description}: ${response.status}`);
-      return null;
-    }
-  } catch (error) {
-    console.log(`Error downloading ${filterList.description}:`, error.message);
-    return null;
-  }
-}
-
-// Try cache first, download if expired
-async function loadFilter(filterList, forceUpdate = false) {
-  if (!forceUpdate && await isCacheValid(filterList.name)) {
-    console.log(`Loading ${filterList.description} from cache...`);
-    const cachedContent = await loadFromCache(filterList.name);
-    if (cachedContent) {
-      console.log(`${filterList.description} loaded from cache`);
-      return cachedContent;
-    }
-  }
-  
-  return await downloadFilter(filterList);
-}
-
 // Load all filters in parallel
-async function initializeFilterEngine(forceUpdate = false) {
-  try {
-    if (!snfe) {
-      snfe = await StaticNetFilteringEngine.create();
-    }
-    
-    const allFilterLists = await loadUserFilters();
-    
-    const enabledFilterLists = allFilterLists.filter(f => f.enabled);
-
-    const filterPromises = enabledFilterLists.map(filterList => 
-      loadFilter(filterList, forceUpdate).then(content => 
-        content ? { name: filterList.name, raw: content } : null
-      )
-    );
-    
-    const results = await Promise.all(filterPromises);
-    const validFilters = results.filter(result => result !== null);
-    
-    if (validFilters.length > 0) {
-      await snfe.useLists(validFilters);
-      console.log(`Filter engine ready with ${validFilters.length} lists!`);
-      
-      if (mainWindow) {
-        createMenu();
-      }
-    }
-    
-    return validFilters.length > 0;
-  } catch (error) {
-    console.log('Error initializing filter engine:', error.message);
-    return false;
-  }
-}
 
 function handleStartupSettings() {
   const args = process.argv.slice(1);
@@ -615,7 +418,7 @@ function createMenu() {
           label: t('update_ad_filters'),
           click: async () => {
             console.log('Manually updating filters...');
-            const success = await initializeFilterEngine(true);
+            const success = await initFiltersExternal(true);
             console.log(success ? 'Filters updated!' : 'Filter update failed');
             
             console.log('Restarting...');
@@ -700,69 +503,6 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-function setupWebRequestHandler() {
-  // Define what to block
-  const blockableResourceTypes = {
-    script: true,
-    stylesheet: false,
-    image: true,
-    font: false,
-    xhr: true,
-    fetch: true,
-    websocket: false,
-    media: false,
-    object: true,
-    ping: true,
-    csp_report: true,
-    preflight: false,
-    navigation: false,
-    sub_frame: true,
-  };
-
-  // Block requests based on filter engine
-  session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
-    if (!snfe) {
-      return callback({});
-    }
-    
-    const resourceType = details.resourceType;
-    const shouldCheckFilters = blockableResourceTypes[resourceType];
-
-    if (!shouldCheckFilters) {
-      return callback({});
-    }
-
-    const resourceTypeMapping = {
-      script: "script",
-      stylesheet: "stylesheet",
-      image: "image",
-      font: "font",
-      xhr: "xmlhttprequest",
-      fetch: "fetch",
-      websocket: "websocket",
-      media: "media",
-      object: "object",
-      ping: "ping",
-      csp_report: "csp_report",
-      sub_frame: "sub_frame",
-    };
-
-    const uBlockType = resourceTypeMapping[resourceType] || "other";
-
-    const shouldBlock = snfe.matchRequest({
-      originURL: details.referrer || details.url,
-      url: details.url,
-      type: uBlockType,
-    });
-
-    if (shouldBlock !== 0) {
-      console.log(`Blocked [${resourceType}]:`, details.url);
-      return callback({ cancel: true });
-    }
-
-    callback({});
-  });
-}
 
 async function createWindow() {
   await loadConfig();
@@ -797,10 +537,10 @@ async function createWindow() {
   createMenu();
 
   // Load filters in background
-  initializeFilterEngine().then((success) => {
+  initFiltersExternal().then((success) => {
     console.log(success ? 'Ad blocking active' : 'Ad blocking failed');
     if (success) {
-      setupWebRequestHandler();
+      setupWRExternal();
     }
   });
 
@@ -935,83 +675,8 @@ async function createWindow() {
     `);
     console.log('Cast buttons hidden');
 
-    // Inject JavaScript to auto-skip video ads
-    if (videoAdSkipperEnabled) {
-    mainWindow.webContents.executeJavaScript(`
-      (function() {
-        console.log('Video ad skipper initialized (Speed: ${VideoAdSkipSpeed}x, Interval: ${VideoAdSkipInterval}ms)');
-        
-        // Function to skip video ads
-        function skipVideoAd() {
-          try {
-            // Look for skip button (various selectors)
-            const skipSelectors = [
-              '.ytp-ad-skip-button',
-              '.ytp-ad-skip-button-modern',
-              '.ytp-skip-ad-button',
-              '.ytp-ad-skip-button-container button',
-              'button.ytp-ad-skip-button',
-              '[class*="skip"][class*="button"]'
-            ];
-            
-            for (const selector of skipSelectors) {
-              const skipButton = document.querySelector(selector);
-              if (skipButton) {
-                // Check if button is clickable (not disabled and visible)
-                const isClickable = !skipButton.disabled && 
-                                   skipButton.offsetParent !== null &&
-                                   !skipButton.hasAttribute('disabled');
-                
-                if (isClickable) {
-                  skipButton.click();
-                  console.log('lol - Skipped video ad');
-                  return true;
-                }
-              }
-            }
-            
-            // If skip button has countdown, try to fast-forward the video
-            const video = document.querySelector('video');
-            if (video) {
-              const player = document.querySelector('.html5-video-player');
-              
-              // Check if ad is showing
-              if (player && (player.classList.contains('ad-showing') || 
-                            player.classList.contains('ad-interrupting'))) {
-                
-                // Fast-forward to near the end (leave 0.1s to trigger skip button)
-                if (video.duration && video.duration > 0 && !isNaN(video.duration)) {
-                  video.currentTime = Math.max(0, video.duration - 0.1);
-                  video.playbackRate = ${VideoAdSkipSpeed}; // Speed up but not too fast
-                  console.log('lol - Fast-forwarding through ad at (Speed=${VideoAdSkipSpeed}x)');
-                  return true;
-                }
-              }
-            }
-          } catch (e) {
-            // Silently fail
-          }
-          return false;
-        }
-        
-        // Run skip check frequently
-        setInterval(skipVideoAd, ${VideoAdSkipInterval});
-        
-        // Also run on various events
-        document.addEventListener('DOMContentLoaded', skipVideoAd);
-        window.addEventListener('load', skipVideoAd);
-        
-        // Watch for DOM changes (when ad elements appear)
-        const observer = new MutationObserver(skipVideoAd);
-        observer.observe(document.body, { 
-          childList: true, 
-          subtree: true 
-        });
-      })();
-    `);
-    }else{
-      console.log('Video ad skipper disabled by user');
-    }
+    injectVideoAdSkipper(mainWindow.webContents, { enabled: videoAdSkipperEnabled, speed: VideoAdSkipSpeed, interval: VideoAdSkipInterval });
+    initDiscordRpc(mainWindow);
 
     // Inject JavaScript to auto-continue listening
     mainWindow.webContents.executeJavaScript(`
