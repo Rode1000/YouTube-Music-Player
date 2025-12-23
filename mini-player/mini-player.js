@@ -61,10 +61,43 @@ settingsBtn.addEventListener('click', () => {
     window.electronAPI.openSettings();
 });
 
+// Custom window dragging logic
+let isDragging = false;
+let initialMouseX, initialMouseY;
+
+document.body.addEventListener('mousedown', (e) => {
+    // Only drag from non-interactive areas
+    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+        isDragging = true;
+        initialMouseX = e.screenX;
+        initialMouseY = e.screenY;
+
+        // Prevent selection/standard behavior during drag
+        e.preventDefault();
+    }
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        const dx = e.screenX - initialMouseX;
+        const dy = e.screenY - initialMouseY;
+
+        if (dx !== 0 || dy !== 0) {
+            if (window.electronAPI && typeof window.electronAPI.moveWindowRelative === 'function') {
+                window.electronAPI.moveWindowRelative(dx, dy);
+                initialMouseX = e.screenX;
+                initialMouseY = e.screenY;
+            }
+        }
+    }
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
 // Double click to restore main window
 document.body.addEventListener('dblclick', (e) => {
-    // Only trigger if clicking on draggable area (body or container)
-    // Buttons are marked as no-drag and usually shouldn't propagate or we check target
     if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
         sendAction('maximize');
     }

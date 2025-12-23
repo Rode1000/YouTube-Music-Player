@@ -11,7 +11,6 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    -webkit-app-region: drag;
     user-select: none;
     overflow: hidden;
     height: 60px;
@@ -128,7 +127,6 @@ body.midnight {
 
 /* Base style for all buttons */
 .control-btn {
-    -webkit-app-region: no-drag;
     background: none;
     border: none;
     cursor: pointer;

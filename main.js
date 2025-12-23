@@ -300,6 +300,12 @@ function createMiniPlayerWindow() {
       miniPlayerStateInterval = null;
     }
     miniPlayerWindow = null;
+
+    // Show main window when mini player is closed (unless app is quitting)
+    if (!app.isQuiting && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
   });
 
   // Start polling state when mini player is opened
@@ -485,6 +491,14 @@ ipcMain.on('resize-about-window', (event, width, height) => {
 
     // Center the window after resizing
     aboutWindow.center();
+  }
+});
+
+ipcMain.on('move-window-relative', (event, data) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && !win.isDestroyed()) {
+    const [x, y] = win.getPosition();
+    win.setPosition(x + data.dx, y + data.dy);
   }
 });
 
