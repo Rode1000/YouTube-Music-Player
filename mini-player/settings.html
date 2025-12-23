@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+    <title>Mini Player Themes</title>
+    <link rel="stylesheet" href="mini-player.css">
+    <style>
+        body {
+            height: auto;
+            border-radius: 0;
+            padding: 10px;
+        }
+
+        #theme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #theme-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .theme-opt {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 0 auto;
+        }
+
+        .theme-opt:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-opt.active {
+            border-color: #fff;
+        }
+
+        .theme-label {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 4px;
+            color: #ccc;
+        }
+
+        .theme-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body class="dark">
+    <div id="theme-header">
+        <span id="theme-title">Themes</span>
+    </div>
+    <div id="theme-list">
+        <div class="theme-item">
+            <button class="theme-opt" data-theme="light" style="background: #ffffff; border: 1px solid #ccc;"></button>
+            <span class="theme-label" data-i18n="theme_light">Light</span>
+        </div>
+        <div class="theme-item">
+            <button class="theme-opt" data-theme="dark" style="background: #1a1a1a;"></button>
+            <span class="theme-label" data-i18n="theme_dark">Dark</span>
+        </div>
+        <div class="theme-item">
+            <button class="theme-opt" data-theme="red" style="background: #ae2929;"></button>
+            <span class="theme-label" data-i18n="theme_red">Red</span>
+        </div>
+        <div class="theme-item">
+            <button class="theme-opt" data-theme="blue" style="background: #294cae;"></button>
+            <span class="theme-label" data-i18n="theme_blue">Blue</span>
+        </div>
+        <div class="theme-item">
+            <button class="theme-opt" data-theme="green" style="background: #29ae29;"></button>
+            <span class="theme-label" data-i18n="theme_green">Green</span>
+        </div>
+        <div class="theme-item">
+            <button class="theme-opt" data-theme="midnight" style="background: #000000;"></button>
+            <span class="theme-label" data-i18n="theme_midnight">Midnight</span>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,191 @@
+/* General window styles */
+:root {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --accent-color: #ff5858;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-app-region: drag;
+    user-select: none;
+    overflow: hidden;
+    height: 60px;
+    transition: background-color 0.3s ease;
+}
+
+body.dark {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --accent-color: #ff5858;
+}
+
+body.light {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --accent-color: #df4444;
+}
+
+body.red {
+    --bg-color: #ae2929;
+    --text-color: #ffffff;
+    --accent-color: #ffffff;
+}
+
+body.blue {
+    --bg-color: #294cae;
+    --text-color: #ffffff;
+    --accent-color: #00aaff;
+}
+
+body.green {
+    --bg-color: #29ae29;
+    --text-color: #ffffff;
+    --accent-color: #00ff88;
+}
+
+body.midnight {
+    --bg-color: #000000;
+    --text-color: #eeeeee;
+    --accent-color: #444444;
+}
+
+#mini-player-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 4px 8px;
+    box-sizing: border-box;
+}
+
+#top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2px;
+}
+
+#song-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+#title {
+    font-size: 12px;
+    font-weight: bold;
+    color: inherit;
+    line-height: 1.2;
+}
+
+#artist {
+    font-size: 10px;
+    color: inherit;
+    opacity: 0.7;
+    line-height: 1.2;
+}
+
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+#controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -2px;
+}
+
+#controls {
+    display: flex;
+    align-items: center;
+}
+
+#extra-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#time-info {
+    font-size: 10px;
+    color: inherit;
+    opacity: 0.6;
+    font-family: monospace;
+}
+
+#top-controls {
+    display: flex;
+    gap: 4px;
+}
+
+/* Base style for all buttons */
+.control-btn {
+    -webkit-app-region: no-drag;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    fill: var(--text-color);
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn.disabled {
+    opacity: 0.3;
+}
+
+.control-btn:hover:not(.disabled) {
+    fill: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.hidden {
+    display: none;
+}
+
+.control-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+#play-pause-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+#maximize-btn svg,
+#settings-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Spinner style */
+.spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--accent-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#rating-controls {
+    display: flex;
+    gap: 2px;
+}

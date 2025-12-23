@@ -49,5 +49,19 @@
   "downloading_in_background": "Downloading update in the background...",
   "ok": "Ok",
   "update_error_d": "Error checking for updates: {0}",
-  "error_d": "Error: {0}"
+  "error_d": "Error: {0}",
+  "reset_position": "Reset window positions",
+  "previous": "Previous",
+  "next": "Next",
+  "play_pause": "Play/Pause",
+  "like": "Like",
+  "dislike": "Dislike",
+  "expand": "Expand",
+  "theme_settings": "Theme Settings",
+  "theme_light": "Light",
+  "theme_dark": "Dark",
+  "theme_red": "Red",
+  "theme_blue": "Blue",
+  "theme_green": "Green",
+  "theme_midnight": "Midnight"
 }
