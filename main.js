@@ -834,7 +834,7 @@ function createMenu() {
       label: t('settings'),
       submenu: [
         {
-          label: t('start_with_windows'),
+          label: t('start_with_system'),
           type: 'checkbox',
           checked: loginItemSettings.openAtLogin,
           click: (menuItem) => {
