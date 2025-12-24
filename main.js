@@ -16,25 +16,32 @@ let resumePlayback = false;
 let lastUrl = "https://music.youtube.com";
 let aboutWindow;
 let miniPlayerWindow;
-let miniPlayerBounds = { x: undefined, y: undefined };
+let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 85 };
 let mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
 let miniPlayerTheme = 'dark';
 
 function ensureWindowIsVisible(bounds, defaultBounds) {
   if (bounds.x === undefined || bounds.y === undefined) return defaultBounds;
 
+  const width = bounds.width || defaultBounds.width;
+  const height = bounds.height || defaultBounds.height;
+
   const displays = screen.getAllDisplays();
   const isVisible = displays.some(display => {
-    const { x, y, width, height } = display.bounds;
-    return (
-      bounds.x < x + width &&
-      bounds.x + (bounds.width || 0) > x &&
-      bounds.y < y + height &&
-      bounds.y + (bounds.height || 0) > y
-    );
+    const { x, y, width: dWidth, height: dHeight } = display.bounds;
+    // Check if at least 50px of the window is visible on this display
+    const visibleX = Math.max(bounds.x, x) < Math.min(bounds.x + width, x + dWidth);
+    const visibleY = Math.max(bounds.y, y) < Math.min(bounds.y + height, y + dHeight);
+
+    if (visibleX && visibleY) {
+      const intersectionWidth = Math.min(bounds.x + width, x + dWidth) - Math.max(bounds.x, x);
+      const intersectionHeight = Math.min(bounds.y + height, y + dHeight) - Math.max(bounds.y, y);
+      return intersectionWidth >= Math.min(width, 50) && intersectionHeight >= Math.min(height, 50);
+    }
+    return false;
   });
 
-  return isVisible ? bounds : defaultBounds;
+  return isVisible ? { ...bounds, width, height } : defaultBounds;
 }
 
 // Video ad skipping settings
@@ -245,15 +252,15 @@ function createMiniPlayerWindow() {
     return;
   }
 
-  const defaultMiniBounds = { x: undefined, y: undefined, width: 320, height: 60 };
+  const defaultMiniBounds = { x: undefined, y: undefined, width: 320, height: 85 };
   const safeBounds = ensureWindowIsVisible(
-    { ...miniPlayerBounds, width: 320, height: 60 },
+    miniPlayerBounds,
     defaultMiniBounds
   );
 
   miniPlayerWindow = new BrowserWindow({
-    width: 320,
-    height: 60,
+    width: safeBounds.width || 320,
+    height: safeBounds.height || 85,
     x: safeBounds.x,
     y: safeBounds.y,
     parent: mainWindow.isVisible() ? mainWindow : null,
@@ -286,6 +293,7 @@ function createMiniPlayerWindow() {
   const saveMiniPlayerPosition = () => {
     if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
       const bounds = miniPlayerWindow.getBounds();
+      // Keep width and height out of the saved config to avoid growth on Windows DPI scaling
       miniPlayerBounds = { x: bounds.x, y: bounds.y };
       saveConfig();
     }
@@ -351,7 +359,8 @@ function startMiniPlayerStatePolling() {
             artist: byline ? byline.innerText.trim() : "",
             thumbnail: thumbnail ? thumbnail.src : "",
             isBuffering: buffering ? !buffering.hidden : false,
-            progress: progress ? progress.value : 0
+            progress: progress ? progress.value : 0,
+            progressMax: progress ? progress.max : 100
           };
         })()
       `);
@@ -497,15 +506,40 @@ ipcMain.on('resize-about-window', (event, width, height) => {
 ipcMain.on('move-window-relative', (event, data) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win && !win.isDestroyed()) {
-    const [x, y] = win.getPosition();
-    win.setPosition(x + data.dx, y + data.dy);
+    const bounds = win.getBounds();
+    const [width, height] = win === miniPlayerWindow ? [320, 85] : [bounds.width, bounds.height];
+
+    let newX = bounds.x + data.dx;
+    let newY = bounds.y + data.dy;
+
+    // Constrain to screen bounds
+    const primaryDisplay = screen.getDisplayMatching(bounds);
+    const { x: sx, y: sy, width: sw, height: sh } = primaryDisplay.workArea;
+
+    // Don't let more than 80% of the window go off-screen
+    const marginX = width * 0.8;
+    const marginY = height * 0.8;
+
+    if (newX < sx - marginX) newX = sx - marginX;
+    if (newX > sx + sw - (width - marginX)) newX = sx + sw - (width - marginX);
+    if (newY < sy - marginY) newY = sy - marginY;
+    if (newY > sy + sh - (height - marginY)) newY = sy + sh - (height - marginY);
+
+    win.setBounds({
+      x: Math.round(newX),
+      y: Math.round(newY),
+      width: width,
+      height: height
+    });
   }
 });
 
-ipcMain.on('player-control', (event, action) => {
+ipcMain.on('player-control', (event, data) => {
   if (!mainWindow) return;
 
+  let action = typeof data === 'string' ? data : data.action;
   let script = "";
+
   switch (action) {
     case 'play-pause':
       script = 'document.querySelector("#play-pause-button").click();';
@@ -522,6 +556,19 @@ ipcMain.on('player-control', (event, action) => {
     case 'dislike':
       script = 'document.querySelector("#button-shape-dislike > button").click();';
       break;
+    case 'seek':
+      if (typeof data.value !== 'undefined') {
+        script = `
+          {
+            const progressBar = document.querySelector("#progress-bar");
+            if (progressBar) {
+              progressBar.value = ${data.value};
+              progressBar.dispatchEvent(new Event('change'));
+            }
+          }
+        `;
+      }
+      break;
     case 'maximize':
       if (miniPlayerWindow) {
         miniPlayerWindow.close();
@@ -533,8 +580,10 @@ ipcMain.on('player-control', (event, action) => {
       break;
   }
 
-  if (script) {
-    mainWindow.webContents.executeJavaScript(script);
+  if (script && mainWindow && !mainWindow.webContents.isDestroyed()) {
+    mainWindow.webContents.executeJavaScript(script).catch(e => {
+      console.error('Error executing player control script:', e);
+    });
   }
 });
 

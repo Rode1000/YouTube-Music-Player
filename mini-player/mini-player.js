@@ -16,6 +16,8 @@ const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
 const timeInfoEl = document.getElementById('time-info');
 const bufferingEl = document.getElementById('buffering-spinner');
+const progressBar = document.getElementById('progress-bar');
+let isUserSeeking = false;
 
 // Fetch and apply translations for tooltips
 async function applyTranslations() {
@@ -65,9 +67,36 @@ settingsBtn.addEventListener('click', () => {
 let isDragging = false;
 let initialMouseX, initialMouseY;
 
+// Helper to update progress bar background
+const updateBarBackground = (value, max) => {
+    if (!max || isNaN(max)) return;
+    const percent = (value / max) * 100;
+    const baseColor = document.body.classList.contains('light') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)';
+    progressBar.style.background = `linear-gradient(to right, var(--accent-color) ${percent}%, ${baseColor} ${percent}%)`;
+};
+
+// Progress bar seeking handlers
+progressBar.addEventListener('mousedown', () => { isUserSeeking = true; });
+progressBar.addEventListener('mouseup', () => {
+    // Delay resuming updates to allow YouTube to catch up
+    setTimeout(() => { isUserSeeking = false; }, 1000);
+});
+
+progressBar.addEventListener('input', (e) => {
+    updateBarBackground(e.target.value, e.target.max);
+});
+
+progressBar.addEventListener('change', (e) => {
+    try {
+        window.electronAPI.sendControl({ action: 'seek', value: e.target.value });
+    } catch (err) {
+        console.error('Error sending seek control:', err);
+    }
+});
+
 document.body.addEventListener('mousedown', (e) => {
-    // Only drag from non-interactive areas
-    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+    // Only drag from non-interactive areas (allow progress bar to handle its own input)
+    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button') && e.target !== progressBar) {
         isDragging = true;
         initialMouseX = e.screenX;
         initialMouseY = e.screenY;
@@ -98,7 +127,7 @@ window.addEventListener('mouseup', () => {
 
 // Double click to restore main window
 document.body.addEventListener('dblclick', (e) => {
-    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button') && e.target !== progressBar) {
         sendAction('maximize');
     }
 });
@@ -127,6 +156,13 @@ window.electronAPI.onStateUpdate((state) => {
     titleEl.textContent = state.title || 'No song playing';
     artistEl.textContent = state.artist || '';
     timeInfoEl.textContent = state.timeInfo || '--:-- / --:--';
+
+    // Update progress bar
+    if (!isUserSeeking && progressBar) {
+        progressBar.max = state.progressMax || 100;
+        progressBar.value = state.progress || 0;
+        updateBarBackground(progressBar.value, progressBar.max);
+    }
 
     // Update buffering state
     bufferingEl.classList.toggle('hidden', !state.isBuffering);
