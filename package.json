@@ -1,6 +1,6 @@
 {
   "name": "youtube-music-player",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "YouTube Music Player",
   "main": "main.js",
   "repository": {
@@ -72,7 +72,9 @@
   },
   "dependencies": {
     "@gorhill/ubo-core": "^0.1.30",
+    "discord-rpc": "^4.0.1",
     "electron-updater": "^6.6.2",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.5"
   }
 }
