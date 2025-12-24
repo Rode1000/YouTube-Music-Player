@@ -12,7 +12,7 @@ let mainWindow;
 let tray;
 let minimizeToTray = false;
 let openMiniPlayerOnMinimize = false;
-let openLastSong = true;
+let openLastSong = false;
 let resumePlayback = false;
 let lastUrl = "https://music.youtube.com";
 let aboutWindow;
@@ -89,7 +89,7 @@ async function loadConfig() {
 
     minimizeToTray = config.minimizeToTray || false;
     openMiniPlayerOnMinimize = config.openMiniPlayerOnMinimize || false;
-    videoAdSkipperEnabled = config.videoAdSkipperEnabled !== false;
+    videoAdSkipperEnabled = !!config.videoAdSkipperEnabled;
     VideoAdSkipSpeed = config.VideoAdSkipSpeed || 2;
     openLastSong = config.openLastSong !== undefined ? config.openLastSong : true;
     lastUrl = openLastSong ? (config.lastUrl || "https://music.youtube.com") : "https://music.youtube.com";
@@ -665,6 +665,13 @@ function toggleResumeBehavior(enabled) {
   createMenu();
   console.log(`Resume playback: ${enabled ? 'Enabled' : 'Disabled'}`);
 }
+function toggleMiniPlayerOnMinimize(enabled) {
+  openMiniPlayerOnMinimize = enabled;
+  saveConfig();
+  createMenu();
+  console.log(`Open mini player on minimize: ${enabled ? 'Enabled' : 'Disabled'}`);
+}
+
 
 // Load all filters in parallel
 
@@ -1083,6 +1090,14 @@ async function createWindow() {
             
             if (!dialog) return false;
         
+            // Check dialog content
+            const dialogText = dialog.textContent?.toLowerCase() || '';
+            const isKeepListeningDialog = dialogText.includes('still listening') || 
+                                           dialogText.includes('still there') || 
+                                           dialogText.includes('you there');
+
+            if (!isKeepListeningDialog) return false;
+
             // Multiple button selectors
             const buttonSelectors = [
               'yt-button-renderer.ytmusic-you-there-renderer',
