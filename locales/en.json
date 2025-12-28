@@ -50,6 +50,7 @@
   "ok": "Ok",
   "update_error_d": "Error checking for updates: {0}",
   "error_d": "Error: {0}",
+  "open_mini_player": "Open mini player on minimize",
   "reset_position": "Reset window positions",
   "previous": "Previous",
   "next": "Next",
