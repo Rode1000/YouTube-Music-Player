@@ -7,6 +7,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getTheme: () => ipcRenderer.invoke('get-mini-player-theme'),
   setTheme: (theme) => ipcRenderer.send('set-mini-player-theme', theme),
   openSettings: () => ipcRenderer.send('open-mini-player-settings'),
-  onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (event, theme) => callback(theme)),
-  moveWindowRelative: (dx, dy) => ipcRenderer.send('move-window-relative', { dx, dy })
+  onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (event, theme) => callback(theme))
 });

@@ -473,36 +473,7 @@ ipcMain.on('resize-about-window', (event, width, height) => {
   }
 });
 
-ipcMain.on('move-window-relative', (event, data) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win && !win.isDestroyed()) {
-    const bounds = win.getBounds();
-    const [width, height] = win === miniPlayerWindow ? [320, 85] : [bounds.width, bounds.height];
 
-    let newX = bounds.x + data.dx;
-    let newY = bounds.y + data.dy;
-
-    // Constrain to screen bounds
-    const primaryDisplay = screen.getDisplayMatching(bounds);
-    const { x: sx, y: sy, width: sw, height: sh } = primaryDisplay.workArea;
-
-    // Don't let more than 80% of the window go off-screen
-    const marginX = width * 0.8;
-    const marginY = height * 0.8;
-
-    if (newX < sx - marginX) newX = sx - marginX;
-    if (newX > sx + sw - (width - marginX)) newX = sx + sw - (width - marginX);
-    if (newY < sy - marginY) newY = sy - marginY;
-    if (newY > sy + sh - (height - marginY)) newY = sy + sh - (height - marginY);
-
-    win.setBounds({
-      x: Math.round(newX),
-      y: Math.round(newY),
-      width: width,
-      height: height
-    });
-  }
-});
 
 ipcMain.on('player-control', (event, data) => {
   if (!mainWindow) return;

@@ -63,10 +63,6 @@ settingsBtn.addEventListener('click', () => {
     window.electronAPI.openSettings();
 });
 
-// Custom window dragging logic
-let isDragging = false;
-let initialMouseX, initialMouseY;
-
 // Helper to update progress bar background
 const updateBarBackground = (value, max) => {
     if (!max || isNaN(max)) return;
@@ -92,37 +88,6 @@ progressBar.addEventListener('change', (e) => {
     } catch (err) {
         console.error('Error sending seek control:', err);
     }
-});
-
-document.body.addEventListener('mousedown', (e) => {
-    // Only drag from non-interactive areas (allow progress bar to handle its own input)
-    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button') && e.target !== progressBar) {
-        isDragging = true;
-        initialMouseX = e.screenX;
-        initialMouseY = e.screenY;
-
-        // Prevent selection/standard behavior during drag
-        e.preventDefault();
-    }
-});
-
-window.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-        const dx = e.screenX - initialMouseX;
-        const dy = e.screenY - initialMouseY;
-
-        if (dx !== 0 || dy !== 0) {
-            if (window.electronAPI && typeof window.electronAPI.moveWindowRelative === 'function') {
-                window.electronAPI.moveWindowRelative(dx, dy);
-                initialMouseX = e.screenX;
-                initialMouseY = e.screenY;
-            }
-        }
-    }
-});
-
-window.addEventListener('mouseup', () => {
-    isDragging = false;
 });
 
 // Double click to restore main window

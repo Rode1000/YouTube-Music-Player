@@ -15,7 +15,9 @@ body {
     overflow: hidden;
     height: 75px;
     transition: background-color 0.3s ease;
+    -webkit-app-region: drag;
 }
+
 
 body.dark {
     --bg-color: #1a1a1a;
@@ -78,7 +80,9 @@ body.midnight {
     transition: all 0.2s;
     margin: 5px 0;
     /* Adds clickable area around the 4px track */
+    -webkit-app-region: no-drag;
 }
+
 
 body.light #progress-bar {
     background: rgba(0, 0, 0, 0.15);
@@ -184,7 +188,9 @@ body.light #progress-bar {
     display: flex;
     align-items: center;
     justify-content: center;
+    -webkit-app-region: no-drag;
 }
+
 
 .control-btn.disabled {
     opacity: 0.3;
