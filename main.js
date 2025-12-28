@@ -170,7 +170,8 @@ function createSettingsWindow() {
       preload: path.join(__dirname, 'settings-filters/sf-preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-    }
+    },
+    icon: iconPath
   });
 
   // Set the menu to null for the settings window
@@ -244,7 +245,8 @@ function createMiniPlayerWindow() {
       preload: path.join(__dirname, 'mini-player/preload-mini-player.js'),
       nodeIntegration: false,
       contextIsolation: true,
-    }
+    },
+    icon: iconPath
   });
 
   miniPlayerWindow.loadFile(path.join(__dirname, 'mini-player/mini-player.html'));
@@ -429,7 +431,8 @@ function createMiniPlayerSettingsWindow() {
       preload: path.join(__dirname, 'mini-player/preload-mini-player.js'),
       nodeIntegration: false,
       contextIsolation: true,
-    }
+    },
+    icon: iconPath
   });
 
   miniPlayerSettingsWindow.setMenu(null);
