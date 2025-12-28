@@ -533,13 +533,6 @@ ipcMain.on('player-control', (event, data) => {
   }
 });
 
-function toggleMiniPlayerOnMinimize(enabled) {
-  openMiniPlayerOnMinimize = enabled;
-  saveConfig();
-  createMenu();
-  console.log(`Open mini player on minimize: ${enabled ? 'Enabled' : 'Disabled'}`);
-}
-
 function createTray() {
   if (tray) return;
 
