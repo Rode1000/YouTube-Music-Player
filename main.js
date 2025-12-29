@@ -435,15 +435,19 @@ function createMiniPlayerSettingsWindow() {
     return;
   }
 
+  const parentWindow = (miniPlayerWindow && !miniPlayerWindow.isDestroyed())
+    ? miniPlayerWindow
+    : ((mainWindow && !mainWindow.isDestroyed()) ? mainWindow : undefined);
+
   miniPlayerSettingsWindow = new BrowserWindow({
     width: 250,
     height: 250,
-    parent: miniPlayerWindow,
-    modal: true,
+    parent: parentWindow,
+    modal: !!parentWindow,
     frame: true,
     resizable: false,
     show: false,
-    title: t('theme_settings'),
+    title: t('mini_player_settings'),
     webPreferences: {
       preload: path.join(__dirname, 'mini-player/preload-mini-player.js'),
       nodeIntegration: false,
@@ -725,6 +729,12 @@ function createMenu() {
             mainWindow.hide();
           }
         }] : []),
+        {
+          label: t('mini_player_settings'),
+          click: () => {
+            createMiniPlayerSettingsWindow();
+          }
+        },
         { type: 'separator' },
         {
           label: t('reopen_last_song'),

@@ -3,6 +3,7 @@
     --bg-color: #1a1a1a;
     --text-color: #ffffff;
     --accent-color: #ff5858;
+    --bg-image: none;
 }
 
 body {
@@ -55,6 +56,12 @@ body.midnight {
     --accent-color: #888888;
 }
 
+body.blur {
+    --bg-color: rgba(20, 20, 20, 0.55);
+    --text-color: #ffffff;
+    --accent-color: #ff5858;
+}
+
 #mini-player-container {
     display: flex;
     flex-direction: column;
@@ -62,6 +69,33 @@ body.midnight {
     padding: 6px 8px 4px 8px;
     box-sizing: border-box;
     justify-content: space-between;
+    position: relative;
+}
+
+body.blur #mini-player-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(14px);
+    transform: scale(1.15);
+    opacity: 0.28;
+    z-index: 0;
+}
+
+body.blur #mini-player-container::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--bg-color);
+    z-index: 0;
+}
+
+body.blur #mini-player-container > * {
+    position: relative;
+    z-index: 1;
 }
 
 #progress-bar-container {
@@ -237,8 +271,8 @@ body.light #thumbnail {
     height: 24px;
 }
 
-#maximize-btn svg,
-#settings-btn svg {
+/* Settings button removed; keep maximize icon sizing */
+#maximize-btn svg {
     width: 16px;
     height: 16px;
 }

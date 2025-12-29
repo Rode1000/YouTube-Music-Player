@@ -7,7 +7,6 @@ const nextBtn = document.getElementById('next-btn');
 const likeBtn = document.getElementById('like-btn');
 const dislikeBtn = document.getElementById('dislike-btn');
 const maximizeBtn = document.getElementById('maximize-btn');
-const settingsBtn = document.getElementById('settings-btn');
 
 const playIcon = document.getElementById('play-icon');
 const pauseIcon = document.getElementById('pause-icon');
@@ -24,7 +23,7 @@ let isUserSeeking = false;
 async function applyTranslations() {
     try {
         const translations = await window.electronAPI.getTranslations([
-            'previous', 'play_pause', 'next', 'like', 'dislike', 'expand', 'theme_settings'
+            'previous', 'play_pause', 'next', 'like', 'dislike', 'expand'
         ]);
 
         prevBtn.title = translations['previous'];
@@ -33,7 +32,6 @@ async function applyTranslations() {
         likeBtn.title = translations['like'];
         dislikeBtn.title = translations['dislike'];
         maximizeBtn.title = translations['expand'];
-        settingsBtn.title = translations['theme_settings'];
     } catch (error) {
         console.error('Error applying translations:', error);
     }
@@ -59,10 +57,6 @@ nextBtn.addEventListener('click', () => sendAction('next'));
 likeBtn.addEventListener('click', () => sendAction('like'));
 dislikeBtn.addEventListener('click', () => sendAction('dislike'));
 maximizeBtn.addEventListener('click', () => sendAction('maximize'));
-
-settingsBtn.addEventListener('click', () => {
-    window.electronAPI.openSettings();
-});
 
 // Helper to update progress bar background
 const updateBarBackground = (value, max) => {
@@ -133,6 +127,12 @@ window.electronAPI.onStateUpdate((state) => {
         } else {
             thumbnailEl.removeAttribute('src');
             thumbnailEl.alt = '';
+        }
+
+        if (src) {
+            document.body.style.setProperty('--bg-image', `url("${src.replace(/"/g, '\\"')}")`);
+        } else {
+            document.body.style.setProperty('--bg-image', 'none');
         }
     }
 

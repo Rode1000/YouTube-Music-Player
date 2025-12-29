@@ -5,10 +5,10 @@ const labels = document.querySelectorAll('[data-i18n]');
 async function applyTranslations() {
     try {
         const translations = await window.electronAPI.getTranslations([
-            'theme_settings', 'theme_light', 'theme_dark', 'theme_red', 'theme_blue', 'theme_green', 'theme_midnight'
+            'mini_player_settings', 'theme_light', 'theme_dark', 'theme_red', 'theme_blue', 'theme_green', 'theme_midnight', 'theme_blur'
         ]);
 
-        themeTitle.textContent = translations['theme_settings'];
+        themeTitle.textContent = translations['mini_player_settings'];
         labels.forEach(label => {
             const key = label.dataset.i18n;
             if (translations[key]) label.textContent = translations[key];
