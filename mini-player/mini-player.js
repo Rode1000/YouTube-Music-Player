@@ -39,7 +39,14 @@ async function applyTranslations() {
 
 async function initTheme() {
     const currentTheme = await window.electronAPI.getTheme();
-    document.body.className = currentTheme;
+    const allowedThemes = new Set(['midnight', 'blur']);
+
+    const resolvedTheme = allowedThemes.has(currentTheme) ? currentTheme : 'midnight';
+    if (resolvedTheme !== currentTheme) {
+        window.electronAPI.setTheme(resolvedTheme);
+    }
+
+    document.body.className = resolvedTheme;
 }
 
 // Variable to simulate play/pause state
@@ -62,7 +69,7 @@ maximizeBtn.addEventListener('click', () => sendAction('maximize'));
 const updateBarBackground = (value, max) => {
     if (!max || isNaN(max)) return;
     const percent = (value / max) * 100;
-    const baseColor = document.body.classList.contains('light') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)';
+    const baseColor = 'rgba(255,255,255,0.2)';
     progressBar.style.background = `linear-gradient(to right, var(--accent-color) ${percent}%, ${baseColor} ${percent}%)`;
 };
 

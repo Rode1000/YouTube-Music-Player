@@ -20,7 +20,7 @@ let aboutWindow;
 let miniPlayerWindow;
 let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 105 };
 let mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
-let miniPlayerTheme = 'dark';
+let miniPlayerTheme = 'blur';
 
 function ensureWindowIsVisible(bounds, defaultBounds) {
   if (bounds.x === undefined || bounds.y === undefined) return defaultBounds;
@@ -97,7 +97,7 @@ async function loadConfig() {
     resumePlayback = config.resumePlayback || false;
     miniPlayerBounds = config.miniPlayerBounds || { x: undefined, y: undefined };
     mainWindowBounds = config.mainWindowBounds || { x: undefined, y: undefined, width: 1200, height: 800 };
-    miniPlayerTheme = config.miniPlayerTheme || 'dark';
+    miniPlayerTheme = config.miniPlayerTheme || 'blur';
 
     console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}, Last URL: ${lastUrl}, Open last song: ${openLastSong}, Resume playback: ${resumePlayback}, Mini-player bounds: ${JSON.stringify(miniPlayerBounds)}, Main window bounds: ${JSON.stringify(mainWindowBounds)}, Mini-player theme: ${miniPlayerTheme}`);
     return config;

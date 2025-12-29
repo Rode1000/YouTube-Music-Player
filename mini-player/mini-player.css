@@ -1,8 +1,8 @@
 /* General window styles */
 :root {
-    --bg-color: #1a1a1a;
-    --text-color: #ffffff;
-    --accent-color: #ff5858;
+    --bg-color: #000000;
+    --text-color: #eeeeee;
+    --accent-color: #888888;
     --bg-image: none;
 }
 
@@ -20,35 +20,6 @@ body {
 }
 
 
-body.dark {
-    --bg-color: #1a1a1a;
-    --text-color: #ffffff;
-    --accent-color: #ff5858;
-}
-
-body.light {
-    --bg-color: #ffffff;
-    --text-color: #333333;
-    --accent-color: #df4444;
-}
-
-body.red {
-    --bg-color: #ae2929;
-    --text-color: #ffffff;
-    --accent-color: #ffffff;
-}
-
-body.blue {
-    --bg-color: #294cae;
-    --text-color: #ffffff;
-    --accent-color: #00aaff;
-}
-
-body.green {
-    --bg-color: #29ae29;
-    --text-color: #ffffff;
-    --accent-color: #00ff88;
-}
 
 body.midnight {
     --bg-color: #000000;
@@ -118,9 +89,6 @@ body.blur #mini-player-container > * {
 }
 
 
-body.light #progress-bar {
-    background: rgba(0, 0, 0, 0.15);
-}
 
 #progress-bar::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -171,9 +139,6 @@ body.light #progress-bar {
     background: rgba(255, 255, 255, 0.08);
 }
 
-body.light #thumbnail {
-    background: rgba(0, 0, 0, 0.08);
-}
 
 #song-info {
     display: flex;

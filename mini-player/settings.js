@@ -5,7 +5,7 @@ const labels = document.querySelectorAll('[data-i18n]');
 async function applyTranslations() {
     try {
         const translations = await window.electronAPI.getTranslations([
-            'mini_player_settings', 'theme_light', 'theme_dark', 'theme_red', 'theme_blue', 'theme_green', 'theme_midnight', 'theme_blur'
+            'mini_player_settings', 'theme_midnight', 'theme_blur'
         ]);
 
         themeTitle.textContent = translations['mini_player_settings'];
@@ -20,9 +20,16 @@ async function applyTranslations() {
 
 async function initTheme() {
     const currentTheme = await window.electronAPI.getTheme();
-    document.body.className = currentTheme;
+    const allowedThemes = new Set(['midnight', 'blur']);
+
+    const resolvedTheme = allowedThemes.has(currentTheme) ? currentTheme : 'midnight';
+    if (resolvedTheme !== currentTheme) {
+        window.electronAPI.setTheme(resolvedTheme);
+    }
+
+    document.body.className = resolvedTheme;
     themeOpts.forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.theme === currentTheme);
+        opt.classList.toggle('active', opt.dataset.theme === resolvedTheme);
     });
 }
 
