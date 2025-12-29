@@ -242,6 +242,7 @@ function createMiniPlayerWindow() {
     alwaysOnTop: true,
     show: false,
     minimizable: false,
+    maximizable: false,
     skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, 'mini-player/preload-mini-player.js'),
