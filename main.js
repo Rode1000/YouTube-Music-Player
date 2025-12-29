@@ -1,5 +1,5 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const { app, BrowserWindow, Menu, Tray, shell, dialog } = require("electron");
+const { app, BrowserWindow, Menu, Tray, shell, dialog, screen } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const path = require('path');
 const fs = require('fs').promises;
@@ -11,10 +11,39 @@ const { initDiscordRpc } = require('./integrations/discordRpc');
 let mainWindow;
 let tray;
 let minimizeToTray = false;
+let openMiniPlayerOnMinimize = false;
 let openLastSong = false;
 let resumePlayback = false;
 let lastUrl = "https://music.youtube.com";
 let aboutWindow;
+let miniPlayerWindow;
+let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 85 };
+let mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
+let miniPlayerTheme = 'dark';
+
+function ensureWindowIsVisible(bounds, defaultBounds) {
+  if (bounds.x === undefined || bounds.y === undefined) return defaultBounds;
+
+  const width = bounds.width || defaultBounds.width;
+  const height = bounds.height || defaultBounds.height;
+
+  const displays = screen.getAllDisplays();
+  const isVisible = displays.some(display => {
+    const { x, y, width: dWidth, height: dHeight } = display.bounds;
+    // Check if at least 50px of the window is visible on this display
+    const visibleX = Math.max(bounds.x, x) < Math.min(bounds.x + width, x + dWidth);
+    const visibleY = Math.max(bounds.y, y) < Math.min(bounds.y + height, y + dHeight);
+
+    if (visibleX && visibleY) {
+      const intersectionWidth = Math.min(bounds.x + width, x + dWidth) - Math.max(bounds.x, x);
+      const intersectionHeight = Math.min(bounds.y + height, y + dHeight) - Math.max(bounds.y, y);
+      return intersectionWidth >= Math.min(width, 50) && intersectionHeight >= Math.min(height, 50);
+    }
+    return false;
+  });
+
+  return isVisible ? { ...bounds, width, height } : defaultBounds;
+}
 
 // Video ad skipping settings
 let videoAdSkipperEnabled = false;
@@ -35,7 +64,7 @@ const { version: APP_VERSION } = require('./package.json');
 const gotTheLock = app.requestSingleInstanceLock();
 
 // Icon
-const iconPath = process.platform === 'win32' 
+const iconPath = process.platform === 'win32'
   ? path.join(__dirname, 'assets', 'icon.ico')
   : path.join(__dirname, 'assets', 'icon.png');
 
@@ -57,15 +86,19 @@ async function loadConfig() {
   try {
     const configData = await fs.readFile(CONFIG_FILE, 'utf8');
     const config = JSON.parse(configData);
-    
+
     minimizeToTray = config.minimizeToTray || false;
+    openMiniPlayerOnMinimize = config.openMiniPlayerOnMinimize || false;
     videoAdSkipperEnabled = !!config.videoAdSkipperEnabled;
     VideoAdSkipSpeed = config.VideoAdSkipSpeed || 2;
     openLastSong = config.openLastSong !== undefined ? config.openLastSong : true;
     lastUrl = openLastSong ? (config.lastUrl || "https://music.youtube.com") : "https://music.youtube.com";
     resumePlayback = config.resumePlayback || false;
-    
-    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}, Last URL: ${lastUrl}, Open last song: ${openLastSong}, Resume playback: ${resumePlayback}`);
+    miniPlayerBounds = config.miniPlayerBounds || { x: undefined, y: undefined };
+    mainWindowBounds = config.mainWindowBounds || { x: undefined, y: undefined, width: 1200, height: 800 };
+    miniPlayerTheme = config.miniPlayerTheme || 'dark';
+
+    console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}, Last URL: ${lastUrl}, Open last song: ${openLastSong}, Resume playback: ${resumePlayback}, Mini-player bounds: ${JSON.stringify(miniPlayerBounds)}, Main window bounds: ${JSON.stringify(mainWindowBounds)}, Mini-player theme: ${miniPlayerTheme}`);
     return config;
   } catch (error) {
     console.log('Using default config settings');
@@ -77,16 +110,20 @@ async function saveConfig() {
   try {
     const config = {
       minimizeToTray: minimizeToTray,
+      openMiniPlayerOnMinimize: openMiniPlayerOnMinimize,
       videoAdSkipperEnabled: videoAdSkipperEnabled,
       VideoAdSkipSpeed: VideoAdSkipSpeed,
       lastUrl: lastUrl,
       openLastSong: openLastSong,
-      resumePlayback: resumePlayback
+      resumePlayback: resumePlayback,
+      miniPlayerBounds: miniPlayerBounds,
+      mainWindowBounds: mainWindowBounds,
+      miniPlayerTheme: miniPlayerTheme
     };
-    
+
     await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
     await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
-    
+
     console.log('Config saved');
   } catch (error) {
     console.log('Error saving config:', error.message);
@@ -133,9 +170,10 @@ function createSettingsWindow() {
       preload: path.join(__dirname, 'settings-filters/sf-preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-    }
+    },
+    icon: iconPath
   });
-  
+
   // Set the menu to null for the settings window
   settingsWindow.setMenu(null);
 
@@ -181,6 +219,138 @@ function createAboutWindow() {
   });
 }
 
+function createMiniPlayerWindow() {
+  if (miniPlayerWindow) {
+    miniPlayerWindow.focus();
+    return;
+  }
+
+  const defaultMiniBounds = { x: undefined, y: undefined, width: 320, height: 85 };
+  const safeBounds = ensureWindowIsVisible(
+    miniPlayerBounds,
+    defaultMiniBounds
+  );
+
+  miniPlayerWindow = new BrowserWindow({
+    width: safeBounds.width || 320,
+    height: safeBounds.height || 85,
+    x: safeBounds.x,
+    y: safeBounds.y,
+    parent: mainWindow.isVisible() ? mainWindow : null,
+    frame: false,
+    resizable: false,
+    alwaysOnTop: true,
+    show: false,
+    minimizable: false,
+    maximizable: false,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'mini-player/preload-mini-player.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    icon: iconPath
+  });
+
+  miniPlayerWindow.loadFile(path.join(__dirname, 'mini-player/mini-player.html'));
+
+  miniPlayerWindow.once('ready-to-show', () => {
+    miniPlayerWindow.show();
+  });
+
+  // Enable F12 and Ctrl+Shift+i for DevTools
+  miniPlayerWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' ||
+      (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+      miniPlayerWindow.webContents.openDevTools({ mode: 'detach' });
+      event.preventDefault();
+    }
+  });
+
+  const saveMiniPlayerPosition = () => {
+    if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+      const bounds = miniPlayerWindow.getBounds();
+      // Keep width and height out of the saved config to avoid growth on Windows DPI scaling
+      miniPlayerBounds = { x: bounds.x, y: bounds.y };
+      saveConfig();
+    }
+  };
+
+  miniPlayerWindow.on('move', saveMiniPlayerPosition);
+  miniPlayerWindow.on('hide', saveMiniPlayerPosition);
+  miniPlayerWindow.on('close', saveMiniPlayerPosition);
+  miniPlayerWindow.on('closed', () => {
+    if (miniPlayerStateInterval) {
+      clearInterval(miniPlayerStateInterval);
+      miniPlayerStateInterval = null;
+    }
+    miniPlayerWindow = null;
+
+    // Show main window when mini player is closed (unless app is quitting)
+    if (!app.isQuiting && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  // Start polling state when mini player is opened
+  startMiniPlayerStatePolling();
+}
+
+let miniPlayerStateInterval;
+function startMiniPlayerStatePolling() {
+  if (miniPlayerStateInterval) clearInterval(miniPlayerStateInterval);
+
+  miniPlayerStateInterval = setInterval(async () => {
+    if (!miniPlayerWindow || miniPlayerWindow.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return;
+
+    try {
+      if (mainWindow.webContents.isDestroyed()) return;
+      const state = await mainWindow.webContents.executeJavaScript(`
+        (() => {
+          const playPauseBtn = document.querySelector("#play-pause-button");
+          const likeBtn = document.querySelector("#button-shape-like > button");
+          const dislikeBtn = document.querySelector("#button-shape-dislike > button");
+          const timeInfo = document.querySelector(".time-info");
+          const title = document.querySelector(".middle-controls .title");
+          const byline = document.querySelector(".middle-controls .byline");
+          const thumbnail = document.querySelector("ytmusic-player-bar img#thumbnail");
+          const progress = document.querySelector("#progress-bar");
+          const buffering = document.querySelector("#buffering-spinner");
+          
+          const getIconLabel = (btn) => {
+            if (!btn) return "";
+            return (btn.getAttribute('aria-label') || btn.title || "").toLowerCase();
+          };
+
+          const label = getIconLabel(playPauseBtn);
+          // "Pausar" (ES), "Pause" (EN), "Pausa" (IT/PT)
+          const isPlaying = label.includes("paus");
+
+          return {
+            isPlaying: isPlaying,
+            isLiked: likeBtn ? likeBtn.getAttribute('aria-pressed') === 'true' : false,
+            isDisliked: dislikeBtn ? dislikeBtn.getAttribute('aria-pressed') === 'true' : false,
+            timeInfo: timeInfo ? timeInfo.innerText.trim() : "",
+            title: title ? title.innerText.trim() : "",
+            artist: byline ? byline.innerText.trim() : "",
+            thumbnail: thumbnail ? thumbnail.src : "",
+            isBuffering: buffering ? !buffering.hidden : false,
+            progress: progress ? progress.value : 0,
+            progressMax: progress ? progress.max : 100
+          };
+        })()
+      `);
+
+      if (miniPlayerWindow && !miniPlayerWindow.isDestroyed() && miniPlayerWindow.webContents && !miniPlayerWindow.webContents.isDestroyed()) {
+        miniPlayerWindow.webContents.send('state-update', state);
+      }
+    } catch (e) {
+      console.error('Error polling player state:', e);
+    }
+  }, 1000);
+}
+
 const { ipcMain } = require('electron');
 
 ipcMain.handle('get-filters', async () => {
@@ -190,7 +360,7 @@ ipcMain.handle('get-filters', async () => {
 ipcMain.handle('get-translations', (event, keys) => {
   const translations = {};
   keys.forEach(key => {
-      translations[key] = t(key);
+    translations[key] = t(key);
   });
   return translations;
 });
@@ -202,11 +372,11 @@ ipcMain.on('save-filters', async (event, newFilters) => {
 
 ipcMain.on('reset-filters', async (event) => {
   try {
-      await resetFiltersExternal();
-      console.log('User filters reset to default successfully.');
-      await initFiltersExternal(true);
+    await resetFiltersExternal();
+    console.log('User filters reset to default successfully.');
+    await initFiltersExternal(true);
   } catch (error) {
-      console.log('Error resetting user filters:', error.message);
+    console.log('Error resetting user filters:', error.message);
   }
 });
 
@@ -217,9 +387,9 @@ ipcMain.handle('get-about-info', () => {
     appDescription: t('about_app_description'),
     githubUrl: 'https://github.com/nubsuki/YouTube-Music-Player',
     translations: {
-        accept: t('accept'),
-        version: t('version_label', APP_VERSION),
-        github_link: t('github_link_text')
+      accept: t('accept'),
+      version: t('version_label', APP_VERSION),
+      github_link: t('github_link_text')
     }
   };
 });
@@ -244,6 +414,61 @@ ipcMain.on('open-external-link', (event, url) => {
     .catch(error => console.error('Error opening external link:', error));
 });
 
+let miniPlayerSettingsWindow;
+function createMiniPlayerSettingsWindow() {
+  if (miniPlayerSettingsWindow) {
+    miniPlayerSettingsWindow.focus();
+    return;
+  }
+
+  miniPlayerSettingsWindow = new BrowserWindow({
+    width: 250,
+    height: 250,
+    parent: miniPlayerWindow,
+    modal: true,
+    frame: true,
+    resizable: false,
+    show: false,
+    title: t('theme_settings'),
+    webPreferences: {
+      preload: path.join(__dirname, 'mini-player/preload-mini-player.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    icon: iconPath
+  });
+
+  miniPlayerSettingsWindow.setMenu(null);
+  miniPlayerSettingsWindow.loadFile(path.join(__dirname, 'mini-player/settings.html'));
+
+  miniPlayerSettingsWindow.once('ready-to-show', () => {
+    miniPlayerSettingsWindow.show();
+  });
+
+  miniPlayerSettingsWindow.on('closed', () => {
+    miniPlayerSettingsWindow = null;
+  });
+}
+
+ipcMain.on('open-mini-player-settings', () => {
+  createMiniPlayerSettingsWindow();
+});
+
+ipcMain.handle('get-mini-player-theme', () => {
+  return miniPlayerTheme;
+});
+
+ipcMain.on('set-mini-player-theme', (event, theme) => {
+  miniPlayerTheme = theme;
+  saveConfig();
+  console.log(`Mini player theme updated to: ${theme}`);
+
+  // Notify all windows of theme change
+  if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+    miniPlayerWindow.webContents.send('theme-changed', theme);
+  }
+});
+
 ipcMain.on('resize-about-window', (event, width, height) => {
   if (aboutWindow) {
     // Set the size and adjust content bounds (important for different OS)
@@ -256,17 +481,90 @@ ipcMain.on('resize-about-window', (event, width, height) => {
 
 
 
+ipcMain.on('player-control', (event, data) => {
+  if (!mainWindow) return;
+
+  let action = typeof data === 'string' ? data : data.action;
+  let script = "";
+
+  switch (action) {
+    case 'play-pause':
+      script = 'document.querySelector("#play-pause-button").click();';
+      break;
+    case 'previous':
+      script = 'document.querySelector(".previous-button").click();';
+      break;
+    case 'next':
+      script = 'document.querySelector(".next-button").click();';
+      break;
+    case 'like':
+      script = 'document.querySelector("#button-shape-like > button").click();';
+      break;
+    case 'dislike':
+      script = 'document.querySelector("#button-shape-dislike > button").click();';
+      break;
+    case 'seek':
+      if (typeof data.value !== 'undefined') {
+        script = `
+          {
+            const progressBar = document.querySelector("#progress-bar");
+            if (progressBar) {
+              progressBar.value = ${data.value};
+              progressBar.dispatchEvent(new Event('change'));
+            }
+          }
+        `;
+      }
+      break;
+    case 'maximize':
+      if (miniPlayerWindow) {
+        miniPlayerWindow.close();
+      }
+      if (mainWindow) {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+      break;
+  }
+
+  if (script && mainWindow && !mainWindow.webContents.isDestroyed()) {
+    mainWindow.webContents.executeJavaScript(script).catch(e => {
+      console.error('Error executing player control script:', e);
+    });
+  }
+});
+
 function createTray() {
   if (tray) return;
-    
+
   tray = new Tray(iconPath);
-  
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: t('show'),
       click: () => {
+        if (miniPlayerWindow) {
+          miniPlayerWindow.close();
+        }
         mainWindow.show();
         mainWindow.focus();
+      }
+    },
+    {
+      label: t('reset_position'),
+      click: () => {
+        mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
+        miniPlayerBounds = { x: undefined, y: undefined };
+        saveConfig();
+
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setSize(1200, 800);
+          mainWindow.center();
+        }
+
+        if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+          miniPlayerWindow.center();
+        }
       }
     },
     {
@@ -277,20 +575,28 @@ function createTray() {
       }
     }
   ]);
-  
+
   tray.setContextMenu(contextMenu);
   tray.setToolTip(t('app_name'));
-  
+
   // Double-click to show/hide
   tray.on('double-click', () => {
     if (mainWindow.isVisible()) {
       mainWindow.hide();
+      // Show the mini player if the option is enabled
+      if (openMiniPlayerOnMinimize) {
+        createMiniPlayerWindow();
+      }
     } else {
+      // Close the mini player when showing the main window
+      if (miniPlayerWindow) {
+        miniPlayerWindow.close();
+      }
       mainWindow.show();
       mainWindow.focus();
     }
   });
-  
+
   console.log('System tray created');
 }
 
@@ -304,13 +610,13 @@ function destroyTray() {
 
 function toggleTrayBehavior(enabled) {
   minimizeToTray = enabled;
-  
+
   if (enabled) {
     createTray();
   } else {
     destroyTray();
   }
-  
+
   saveConfig();
   createMenu();
   console.log(`Minimize to tray: ${enabled ? 'Enabled' : 'Disabled'}`);
@@ -329,12 +635,19 @@ function toggleResumeBehavior(enabled) {
   createMenu();
   console.log(`Resume playback: ${enabled ? 'Enabled' : 'Disabled'}`);
 }
+function toggleMiniPlayerOnMinimize(enabled) {
+  openMiniPlayerOnMinimize = enabled;
+  saveConfig();
+  createMenu();
+  console.log(`Open mini player on minimize: ${enabled ? 'Enabled' : 'Disabled'}`);
+}
+
 
 // Load all filters in parallel
 
 function handleStartupSettings() {
   const args = process.argv.slice(1);
-  
+
   if (args.includes('--enable-startup')) {
     app.setLoginItemSettings({
       openAtLogin: true,
@@ -342,27 +655,27 @@ function handleStartupSettings() {
     });
     console.log('Startup enabled');
   }
-  
+
   if (args.includes('--disable-startup')) {
     app.setLoginItemSettings({
       openAtLogin: false
     });
     console.log('Startup disabled');
   }
-  
+
   const loginItemSettings = app.getLoginItemSettings();
   console.log(`Startup status: ${loginItemSettings.openAtLogin ? 'Enabled' : 'Disabled'}`);
 }
 
 function createMenu() {
   const loginItemSettings = app.getLoginItemSettings();
-  
+
   const template = [
     {
       label: t('settings'),
       submenu: [
         {
-          label: t('start_with_windows'),
+          label: t('start_with_system'),
           type: 'checkbox',
           checked: loginItemSettings.openAtLogin,
           click: (menuItem) => {
@@ -382,7 +695,15 @@ function createMenu() {
             toggleTrayBehavior(menuItem.checked);
           }
         },
-        // Show tray option only when enabled
+        // Show tray options only when enabled
+        ...(minimizeToTray ? [{
+          label: t('open_mini_player'),
+          type: 'checkbox',
+          checked: openMiniPlayerOnMinimize,
+          click: (menuItem) => {
+            toggleMiniPlayerOnMinimize(menuItem.checked);
+          }
+        }] : []),
         ...(minimizeToTray ? [{
           label: t('hide_to_tray'),
           accelerator: 'Ctrl+H',
@@ -420,7 +741,7 @@ function createMenu() {
             console.log('Manually updating filters...');
             const success = await initFiltersExternal(true);
             console.log(success ? 'Filters updated!' : 'Filter update failed');
-            
+
             console.log('Restarting...');
             app.relaunch();
             app.quit();
@@ -446,7 +767,7 @@ function createMenu() {
             try {
               // Check for updates 
               const result = await autoUpdater.checkForUpdates();
-              
+
               if (result && result.updateInfo && result.updateInfo.version !== APP_VERSION) {
                 // Update available
                 const updateResult = await dialog.showMessageBox(mainWindow, {
@@ -466,7 +787,7 @@ function createMenu() {
                     message: t('downloading_in_background'),
                     buttons: [t('ok')]
                   });
-                  
+
                   // Start download
                   autoUpdater.downloadUpdate();
                 }
@@ -498,7 +819,7 @@ function createMenu() {
       ]
     }
   ];
-  
+
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
@@ -515,9 +836,16 @@ async function createWindow() {
     createTray();
   }
 
+  const safeMainBounds = ensureWindowIsVisible(
+    mainWindowBounds,
+    { x: undefined, y: undefined, width: 1200, height: 800 }
+  );
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: safeMainBounds.width || 1200,
+    height: safeMainBounds.height || 800,
+    x: safeMainBounds.x,
+    y: safeMainBounds.y,
     autoHideMenuBar: false,
     icon: iconPath,
     webPreferences: {
@@ -525,10 +853,26 @@ async function createWindow() {
     },
   });
 
+  const saveMainWindowBounds = () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const bounds = mainWindow.getBounds();
+      mainWindowBounds = {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height
+      };
+      saveConfig();
+    }
+  };
+
+  mainWindow.on('move', saveMainWindowBounds);
+  mainWindow.on('resize', saveMainWindowBounds);
+
   // Enable F12 and Ctrl+Shift+i for DevTools - for Advanced Users
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.key === 'F12' || 
-        (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+    if (input.key === 'F12' ||
+      (input.control && input.shift && input.key.toLowerCase() === 'i')) {
       mainWindow.webContents.toggleDevTools();
       event.preventDefault();
     }
@@ -551,7 +895,11 @@ async function createWindow() {
       event.preventDefault();
       mainWindow.hide();
       console.log('App minimized to tray');
-      
+
+      if (openMiniPlayerOnMinimize) {
+        createMiniPlayerWindow();
+      }
+
       if (tray && !mainWindow.trayNotificationShown) {
         tray.displayBalloon({
           iconType: 'info',
@@ -563,7 +911,7 @@ async function createWindow() {
     } else {
       // Pause music and close
       event.preventDefault();
-      
+
       try {
         await mainWindow.webContents.executeJavaScript(`
           try {
@@ -581,12 +929,12 @@ async function createWindow() {
           }
         `);
         let currentUrl = mainWindow.webContents.getURL();
-        
+
         // Only save URL/time parameter if 'openLastSong' is enabled
         if (openLastSong) {
           // Only add time parameter if 'resumePlayback' is enabled AND it's a watch page
           if (resumePlayback && currentUrl.includes('music.youtube.com/watch')) {
-            
+
             // Execute script to get current time in seconds
             const currentTimeValue = await mainWindow.webContents.executeJavaScript(`
                 // Get the 'value' attribute of the progress bar slider, which is the time in seconds
@@ -616,11 +964,15 @@ async function createWindow() {
         lastUrl = currentUrl;
         await saveConfig();
         console.log(`URL saved: ${lastUrl}`);
-        mainWindow.destroy();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.destroy();
+        }
         app.quit();
       } catch (error) {
         console.log('Error pausing audio:', error);
-        mainWindow.destroy();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.destroy();
+        }
         app.quit();
       }
     }
@@ -629,7 +981,7 @@ async function createWindow() {
   const youtubeMusicDomain = 'music.youtube.com';
 
   let finalUrlToLoad = `https://${youtubeMusicDomain}`;
-  
+
   try {
     const parsedUrl = new URL(lastUrl);
     if (parsedUrl.hostname === youtubeMusicDomain) {
@@ -649,7 +1001,7 @@ async function createWindow() {
 
   mainWindow.loadURL(finalUrlToLoad);
   console.log(`Loading URL: ${finalUrlToLoad}`);
-  
+
   // Hide cast buttons
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.webContents.insertCSS(`
@@ -750,7 +1102,7 @@ async function createWindow() {
         console.log('Auto-continue listening feature initialized');
       })();
     `);
-    
+
   });
 }
 
@@ -809,6 +1161,9 @@ if (gotTheLock) {
   app.whenReady().then(createWindow);
 
   app.on("window-all-closed", () => {
+    if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+      miniPlayerWindow.close();
+    }
     if (!minimizeToTray) {
       if (process.platform !== "darwin") {
         app.quit();
@@ -820,6 +1175,9 @@ if (gotTheLock) {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     } else {
+      if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+        miniPlayerWindow.close();
+      }
       mainWindow.show();
       mainWindow.focus();
     }

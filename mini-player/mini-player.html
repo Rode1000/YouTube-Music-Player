@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+    <title>Mini Player</title>
+    <link rel="stylesheet" href="mini-player.css">
+</head>
+
+<body>
+
+    <div id="mini-player-container">
+        <div id="top-row">
+            <div id="song-info">
+                <div id="title" class="truncate">Loading...</div>
+                <div id="artist" class="truncate">...</div>
+            </div>
+            <div id="top-controls">
+                <button id="settings-btn" class="control-btn" title="Theme Settings">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z">
+                        </path>
+                    </svg>
+                </button>
+                <button id="maximize-btn" class="control-btn" title="Expand">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="progress-bar-container">
+            <input type="range" id="progress-bar" min="0" max="100" value="0">
+        </div>
+
+        <div id="controls-row">
+            <div id="controls">
+                <button id="prev-btn" class="control-btn" title="Previous">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path>
+                    </svg>
+                </button>
+
+                <button id="play-pause-btn" class="control-btn" title="Play/Pause">
+                    <svg id="play-icon" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                    <svg id="pause-icon" class="hidden" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+                    </svg>
+                </button>
+
+                <button id="next-btn" class="control-btn" title="Next">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="extra-info">
+                <div id="time-info">0:00 / 0:00</div>
+                <div id="buffering-spinner" class="spinner hidden"></div>
+                <div id="rating-controls">
+                    <button id="dislike-btn" class="control-btn disabled" title="Dislike">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <button id="like-btn" class="control-btn disabled" title="Like">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="mini-player.js"></script>
+</body>
+
+</html>
