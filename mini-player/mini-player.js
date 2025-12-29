@@ -14,6 +14,7 @@ const pauseIcon = document.getElementById('pause-icon');
 
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
+const thumbnailEl = document.getElementById('thumbnail');
 const timeInfoEl = document.getElementById('time-info');
 const bufferingEl = document.getElementById('buffering-spinner');
 const progressBar = document.getElementById('progress-bar');
@@ -118,9 +119,22 @@ window.electronAPI.onStateUpdate((state) => {
     dislikeBtn.classList.toggle('disabled', !state.isDisliked);
 
     // Update song info
-    titleEl.textContent = state.title || 'No song playing';
+    const safeTitle = state.title || 'No song playing';
+    titleEl.textContent = safeTitle;
     artistEl.textContent = state.artist || '';
     timeInfoEl.textContent = state.timeInfo || '--:-- / --:--';
+
+    if (thumbnailEl) {
+        const src = state.thumbnail || '';
+        thumbnailEl.classList.toggle('hidden', !src);
+        if (src) {
+            if (thumbnailEl.src !== src) thumbnailEl.src = src;
+            thumbnailEl.alt = safeTitle;
+        } else {
+            thumbnailEl.removeAttribute('src');
+            thumbnailEl.alt = '';
+        }
+    }
 
     // Update progress bar
     if (!isUserSeeking && progressBar) {

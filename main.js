@@ -17,7 +17,7 @@ let resumePlayback = false;
 let lastUrl = "https://music.youtube.com";
 let aboutWindow;
 let miniPlayerWindow;
-let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 85 };
+let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 105 };
 let mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
 let miniPlayerTheme = 'dark';
 
@@ -225,7 +225,7 @@ function createMiniPlayerWindow() {
     return;
   }
 
-  const defaultMiniBounds = { x: undefined, y: undefined, width: 320, height: 85 };
+  const defaultMiniBounds = { x: undefined, y: undefined, width: 320, height: 105 };
   const safeBounds = ensureWindowIsVisible(
     miniPlayerBounds,
     defaultMiniBounds
@@ -233,7 +233,7 @@ function createMiniPlayerWindow() {
 
   miniPlayerWindow = new BrowserWindow({
     width: safeBounds.width || 320,
-    height: safeBounds.height || 85,
+    height: safeBounds.height || 105,
     x: safeBounds.x,
     y: safeBounds.y,
     parent: mainWindow.isVisible() ? mainWindow : null,
@@ -314,7 +314,21 @@ function startMiniPlayerStatePolling() {
           const timeInfo = document.querySelector(".time-info");
           const title = document.querySelector(".middle-controls .title");
           const byline = document.querySelector(".middle-controls .byline");
-          const thumbnail = document.querySelector("ytmusic-player-bar img#thumbnail");
+
+          const thumbnailImg =
+            document.querySelector("ytmusic-player-bar img#thumbnail") ||
+            document.querySelector("ytmusic-player-bar img") ||
+            document.querySelector("#player-bar img") ||
+            document.querySelector("img#thumbnail") ||
+            document.querySelector(".thumbnail img");
+
+          const getImgSrc = (img) => {
+            if (!img) return "";
+            return img.currentSrc || img.src || img.getAttribute("src") || "";
+          };
+
+          const thumbnailSrc = getImgSrc(thumbnailImg);
+
           const progress = document.querySelector("#progress-bar");
           const buffering = document.querySelector("#buffering-spinner");
           
@@ -334,7 +348,7 @@ function startMiniPlayerStatePolling() {
             timeInfo: timeInfo ? timeInfo.innerText.trim() : "",
             title: title ? title.innerText.trim() : "",
             artist: byline ? byline.innerText.trim() : "",
-            thumbnail: thumbnail ? thumbnail.src : "",
+            thumbnail: thumbnailSrc,
             isBuffering: buffering ? !buffering.hidden : false,
             progress: progress ? progress.value : 0,
             progressMax: progress ? progress.max : 100
