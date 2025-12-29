@@ -9,6 +9,7 @@ const { initDiscordRpc } = require('./integrations/discordRpc');
 
 
 let mainWindow;
+let settingsWindow;
 let tray;
 let minimizeToTray = false;
 let openMiniPlayerOnMinimize = false;
@@ -159,7 +160,12 @@ function t(key, ...args) {
 
 
 function createSettingsWindow() {
-  const settingsWindow = new BrowserWindow({
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.focus();
+    return settingsWindow;
+  }
+
+  settingsWindow = new BrowserWindow({
     width: 800,
     height: 600,
     parent: mainWindow,
@@ -174,13 +180,15 @@ function createSettingsWindow() {
     icon: iconPath
   });
 
-  // Set the menu to null for the settings window
   settingsWindow.setMenu(null);
-
   settingsWindow.loadFile(path.join(__dirname, 'settings-filters/settings-filters.html'));
 
   settingsWindow.once('ready-to-show', () => {
     settingsWindow.show();
+  });
+
+  settingsWindow.on('closed', () => {
+    settingsWindow = null;
   });
 
   return settingsWindow;
@@ -507,28 +515,32 @@ ipcMain.on('player-control', (event, data) => {
 
   switch (action) {
     case 'play-pause':
-      script = 'document.querySelector("#play-pause-button").click();';
+      script = 'const btn = document.querySelector("#play-pause-button"); if (btn) btn.click();';
       break;
     case 'previous':
-      script = 'document.querySelector(".previous-button").click();';
+      script = 'const btn = document.querySelector(".previous-button"); if (btn) btn.click();';
       break;
     case 'next':
-      script = 'document.querySelector(".next-button").click();';
+      script = 'const btn = document.querySelector(".next-button"); if (btn) btn.click();';
       break;
     case 'like':
-      script = 'document.querySelector("#button-shape-like > button").click();';
+      script = 'const btn = document.querySelector("#button-shape-like > button"); if (btn) btn.click();';
       break;
     case 'dislike':
-      script = 'document.querySelector("#button-shape-dislike > button").click();';
+      script = 'const btn = document.querySelector("#button-shape-dislike > button"); if (btn) btn.click();';
       break;
     case 'seek':
       if (typeof data.value !== 'undefined') {
+        const rawValue = data.value;
         script = `
           {
             const progressBar = document.querySelector("#progress-bar");
-            if (progressBar) {
-              progressBar.value = ${data.value};
-              progressBar.dispatchEvent(new Event('change'));
+            const rawValue = ${JSON.stringify(rawValue)};
+            const value = Number(rawValue);
+            if (progressBar && Number.isFinite(value)) {
+              progressBar.value = value;
+              progressBar.dispatchEvent(new Event('input', { bubbles: true }));
+              progressBar.dispatchEvent(new Event('change', { bubbles: true }));
             }
           }
         `;

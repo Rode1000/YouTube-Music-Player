@@ -10,11 +10,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const configTitle = document.getElementById('config-title');
 
     configTitle.textContent = translations.ad_filter_config_title;
-    addFilterLink.textContent = translations.add_new_filter;
-    moreFiltersLink.textContent = translations.more_filters;
-    saveButton.textContent = translations.save;
-    cancelButton.textContent = translations.cancel;
-    resetButton.textContent = translations.reset;
+    document.getElementById('add-filter-text').textContent = translations.add_new_filter;
+    document.getElementById('more-filters-text').textContent = translations.more_filters;
+    document.getElementById('save-button-text').textContent = translations.save;
+    document.getElementById('cancel-button-text').textContent = translations.cancel;
+    document.getElementById('reset-button-text').textContent = translations.reset;
 
     let allFilters = [];
 
@@ -82,15 +82,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     renderFilters();
 
-    saveButton.addEventListener('click', () => {
-        const userFiltersToSave = allFilters.filter(f => !f.isDefault).map(f => ({
+    saveButton.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const filtersToSave = allFilters.map(f => ({
             name: f.name,
             url: f.url,
+            description: f.description,
             enabled: f.enabled
         }));
-        window.electronAPI.saveFilters(userFiltersToSave);
 
-        //save ad skipper settings
+        window.electronAPI.saveFilters(filtersToSave);
+
         window.electronAPI.saveAdSkipperSettings({
             enabled: adSkipperEnabled.checked,
             speed: parseInt(adSkipSpeed.value)
@@ -99,7 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.close();
     });
 
-    cancelButton.addEventListener('click', () => {
+    cancelButton.addEventListener('click', (e) => {
+        e.preventDefault();
         window.close();
     });
 
@@ -114,7 +118,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.electronAPI.openExternal('https://github.com/uBlockOrigin/uAssets/tree/master');
     });
 
-    resetButton.addEventListener('click', () => {
+    resetButton.addEventListener('click', (e) => {
+        e.preventDefault();
         window.electronAPI.resetFilters();
         window.close();
     });
