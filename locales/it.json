@@ -58,11 +58,10 @@
     "like": "Mi piace",
     "dislike": "Non mi piace",
     "expand": "Espandi",
+    "mini_player_settings": "Impostazioni mini player",
+    "theme": "Tema",
+    "always_on_top": "Sempre in primo piano",
     "theme_settings": "Impostazioni Tema",
-    "theme_light": "Chiaro",
-    "theme_dark": "Scuro",
-    "theme_red": "Rosso",
-    "theme_blue": "Blu",
-    "theme_green": "Verde",
-    "theme_midnight": "Mezzanotte"
+    "theme_midnight": "Mezzanotte",
+    "theme_blur": "Sfocatura"
 }

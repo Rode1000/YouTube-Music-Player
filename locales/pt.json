@@ -58,11 +58,10 @@
     "like": "Gostei",
     "dislike": "Não gostei",
     "expand": "Expandir",
+    "mini_player_settings": "Configurações do mini player",
+    "theme": "Tema",
+    "always_on_top": "Sempre no topo",
     "theme_settings": "Configurações de Tema",
-    "theme_light": "Claro",
-    "theme_dark": "Escuro",
-    "theme_red": "Vermelho",
-    "theme_blue": "Azul",
-    "theme_green": "Verde",
-    "theme_midnight": "Meia-noite"
+    "theme_midnight": "Meia-noite",
+    "theme_blur": "Desfoque"
 }

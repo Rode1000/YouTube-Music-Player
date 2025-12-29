@@ -21,6 +21,7 @@ let miniPlayerWindow;
 let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 105 };
 let mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
 let miniPlayerTheme = 'blur';
+let miniPlayerAlwaysOnTop = true;
 
 function ensureWindowIsVisible(bounds, defaultBounds) {
   if (bounds.x === undefined || bounds.y === undefined) return defaultBounds;
@@ -98,6 +99,7 @@ async function loadConfig() {
     miniPlayerBounds = config.miniPlayerBounds || { x: undefined, y: undefined };
     mainWindowBounds = config.mainWindowBounds || { x: undefined, y: undefined, width: 1200, height: 800 };
     miniPlayerTheme = config.miniPlayerTheme || 'blur';
+    miniPlayerAlwaysOnTop = config.miniPlayerAlwaysOnTop !== undefined ? !!config.miniPlayerAlwaysOnTop : true;
 
     console.log(`Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}, Last URL: ${lastUrl}, Open last song: ${openLastSong}, Resume playback: ${resumePlayback}, Mini-player bounds: ${JSON.stringify(miniPlayerBounds)}, Main window bounds: ${JSON.stringify(mainWindowBounds)}, Mini-player theme: ${miniPlayerTheme}`);
     return config;
@@ -119,7 +121,8 @@ async function saveConfig() {
       resumePlayback: resumePlayback,
       miniPlayerBounds: miniPlayerBounds,
       mainWindowBounds: mainWindowBounds,
-      miniPlayerTheme: miniPlayerTheme
+      miniPlayerTheme: miniPlayerTheme,
+      miniPlayerAlwaysOnTop: miniPlayerAlwaysOnTop
     };
 
     await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
@@ -247,7 +250,7 @@ function createMiniPlayerWindow() {
     parent: mainWindow.isVisible() ? mainWindow : null,
     frame: false,
     resizable: false,
-    alwaysOnTop: true,
+    alwaysOnTop: miniPlayerAlwaysOnTop,
     show: false,
     minimizable: false,
     maximizable: false,
@@ -492,6 +495,19 @@ ipcMain.on('set-mini-player-theme', (event, theme) => {
   // Notify all windows of theme change
   if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
     miniPlayerWindow.webContents.send('theme-changed', theme);
+  }
+});
+
+ipcMain.handle('get-mini-player-always-on-top', () => {
+  return miniPlayerAlwaysOnTop;
+});
+
+ipcMain.on('set-mini-player-always-on-top', (event, enabled) => {
+  miniPlayerAlwaysOnTop = !!enabled;
+  saveConfig();
+
+  if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+    miniPlayerWindow.setAlwaysOnTop(miniPlayerAlwaysOnTop);
   }
 });
 

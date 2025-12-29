@@ -1,11 +1,12 @@
-const themeOpts = document.querySelectorAll('.theme-opt');
+const themeOpts = document.querySelectorAll('.option-btn[data-theme]');
 const themeTitle = document.getElementById('theme-title');
 const labels = document.querySelectorAll('[data-i18n]');
+const alwaysOnTopEl = document.getElementById('always-on-top');
 
 async function applyTranslations() {
     try {
         const translations = await window.electronAPI.getTranslations([
-            'mini_player_settings', 'theme_midnight', 'theme_blur'
+            'mini_player_settings', 'theme', 'theme_midnight', 'theme_blur', 'always_on_top'
         ]);
 
         themeTitle.textContent = translations['mini_player_settings'];
@@ -33,6 +34,17 @@ async function initTheme() {
     });
 }
 
+async function initAlwaysOnTop() {
+    if (!alwaysOnTopEl) return;
+
+    const enabled = await window.electronAPI.getAlwaysOnTop();
+    alwaysOnTopEl.checked = !!enabled;
+
+    alwaysOnTopEl.addEventListener('change', () => {
+        window.electronAPI.setAlwaysOnTop(alwaysOnTopEl.checked);
+    });
+}
+
 themeOpts.forEach(opt => {
     opt.addEventListener('click', () => {
         const theme = opt.dataset.theme;
@@ -45,3 +57,4 @@ themeOpts.forEach(opt => {
 
 applyTranslations();
 initTheme();
+initAlwaysOnTop();
