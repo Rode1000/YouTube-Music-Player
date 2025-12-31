@@ -1,6 +1,6 @@
 {
   "name": "youtube-music-player",
-  "version": "1.9.0",
+  "version": "2.0.0",
   "description": "YouTube Music Player",
   "main": "main.js",
   "repository": {
@@ -71,10 +71,11 @@
     }
   },
   "dependencies": {
+    "@ghostery/adblocker-electron": "^2.13.2",
     "@gorhill/ubo-core": "^0.1.30",
     "discord-rpc": "^4.0.1",
+    "dotenv": "^16.4.5",
     "electron-updater": "^6.6.2",
-    "node-fetch": "^3.3.2",
-    "dotenv": "^16.4.5"
+    "node-fetch": "^3.3.2"
   }
 }

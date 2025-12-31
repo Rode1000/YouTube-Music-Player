@@ -15,19 +15,22 @@ A simple desktop application for **YouTube Music**.
 
 ## Features
 
-- **Filter Connection**: Filters network requests using multiple filter lists (EasyList, EasyPrivacy, uBlock filters).
-- **Multi-language Support**: Automatically detects system locale with support for English and Spanish.
-- **Minimize to Tray**: Close the app window to minimize it to the system tray and keep music playing (Remembers last toggle state).
+- **Filter Connection**: Filters network requests using multiple filter lists (EasyList, EasyPrivacy, uBlock filters, Ghostery filters).
+- **Multi-language Support**: Automatically detects system locale with support for English, Spanish, Italian, and Portuguese by [@Rode1000](https://github.com/Rode1000).
+- **Minimize to Tray**: Minimize to the system tray and keep music playing (remembers the toggle state).
+- **Mini Player**: Optional always-on-top mini player with playback controls, seek bar, like/dislike, and quick return to the main window.
+- **Mini Player Themes**: Change mini player theme colors from the mini player settings.
 - **Remember Last Song**: Automatically reopens the last song/video you were listening to when you restart the app.
 - **Resume Playback**: Resumes playback from the exact timestamp where you left off (works with "Remember Last Song").
 - **Smart Caching**: Caches filter lists and updates every 24h for better performance.
 - **Cast Button Removal**: Automatically hides cast/connect buttons for cleaner interface.
-- **Start with Windows**: Launch automatically on system startup.
+- **Start with System**: Launch automatically on system startup.
 - **Custom Filter Lists**: Add, remove, enable/disable custom filter lists with persistent configuration.
 - **Manual Filter Update**: Manually trigger filter list updates from the menu without waiting 24 hours.
-- **Simple Skipper**: Automatically skips with configurable speed (2-16x).
+- **Simple Skipper**: Automatically skips with configurable speed.
 - **Auto-Continue Listening**: Automatically dismisses the "Still listening?" dialog to keep music playing without interruption.
-- **Keyboard Shortcuts**: 
+- **Window Position Restore**: Restores last window positions and includes a tray option to reset them.
+- **Keyboard Shortcuts**:
   - `Ctrl+H` - Hide to tray (when minimize to tray is enabled)
   - `Ctrl+Q` - Quit application
   - `F12` or `Ctrl+Shift+I` - Developer Tools
@@ -39,6 +42,9 @@ A simple desktop application for **YouTube Music**.
 ![status](assets/ostatus.png)
 ![pstatus](assets/pstatus.png)
 
+## Mini Player
+
+![MiniPlayer](assets/MiniPlayer.png)
 ---
 
 ## Get Started
@@ -60,8 +66,8 @@ A simple desktop application for **YouTube Music**.
 
 ---
  ### Notes
- **Worried about account bans due to uBlock Origin core?**
- Use a **burner account/email** or stick with **v1.4.0** that version doesn't include any uBlock Origin core functionality.
+ **Worried about account bans due to Ghostery / uBlock Origin core?**
+ Use a **burner account/email** or stick with **v1.4.0** that version doesn't include any uBlock Origin core or Ghostery functionality.
 Current version ![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player?style=flat-square) with enhanced features with uBlock Origin integration.
 
 **Important:**
@@ -75,5 +81,6 @@ This helps avoid conflicts or unexpected behavior from older versions.
 - This software is provided "as-is" without any warranties or guarantees. 
 - Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - uBlock Origin core by [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
+- Ghostery/adblocker by [`@ghostery`](https://github.com/ghostery/adblocker)
 
 ---
