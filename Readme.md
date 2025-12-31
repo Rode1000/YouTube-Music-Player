@@ -15,7 +15,7 @@ A simple desktop application for **YouTube Music**.
 
 ## Features
 
-- **Filter Connection**: Filters network requests using multiple filter lists (EasyList, EasyPrivacy, uBlock filters).
+- **Filter Connection**: Filters network requests using multiple filter lists (EasyList, EasyPrivacy, uBlock filters, Ghostery filters).
 - **Multi-language Support**: Automatically detects system locale with support for English, Spanish, Italian, and Portuguese by [@Rode1000](https://github.com/Rode1000).
 - **Minimize to Tray**: Minimize to the system tray and keep music playing (remembers the toggle state).
 - **Mini Player**: Optional always-on-top mini player with playback controls, seek bar, like/dislike, and quick return to the main window.
@@ -66,8 +66,8 @@ A simple desktop application for **YouTube Music**.
 
 ---
  ### Notes
- **Worried about account bans due to uBlock Origin core?**
- Use a **burner account/email** or stick with **v1.4.0** that version doesn't include any uBlock Origin core functionality.
+ **Worried about account bans due to Ghostery/adblocker / uBlock Origin core?**
+ Use a **burner account/email** or stick with **v1.4.0** that version doesn't include any uBlock Origin core or Ghostery functionality.
 Current version ![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player?style=flat-square) with enhanced features with uBlock Origin integration.
 
 **Important:**
@@ -81,5 +81,6 @@ This helps avoid conflicts or unexpected behavior from older versions.
 - This software is provided "as-is" without any warranties or guarantees. 
 - Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - uBlock Origin core by [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
+- Ghostery/adblocker by [`@ghostery/adblocker`](https://github.com/ghostery/adblocker)
 
 ---
