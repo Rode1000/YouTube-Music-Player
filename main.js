@@ -795,6 +795,13 @@ function createMenu() {
             console.log(success ? 'Filters updated!' : 'Filter update failed');
 
             console.log('Restarting...');
+            app.isQuiting = true;
+
+            if (miniPlayerSettingsWindow && !miniPlayerSettingsWindow.isDestroyed()) miniPlayerSettingsWindow.close();
+            if (settingsWindow && !settingsWindow.isDestroyed()) settingsWindow.close();
+            if (aboutWindow && !aboutWindow.isDestroyed()) aboutWindow.close();
+            if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) miniPlayerWindow.close();
+
             app.relaunch();
             app.quit();
           }
