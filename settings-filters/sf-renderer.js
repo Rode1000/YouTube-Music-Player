@@ -107,11 +107,119 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.close();
     });
 
-    addFilterLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        allFilters.push({ name: '', url: '', enabled: true, isDefault: false });
-        renderFilters();
-    });
+    const addFilterModal = document.getElementById('add-filter-modal');
+    const addFilterName = document.getElementById('add-filter-name');
+    const addFilterUrl = document.getElementById('add-filter-url');
+    const addFilterError = document.getElementById('add-filter-error');
+    const addFilterCancel = document.getElementById('add-filter-cancel');
+    const addFilterConfirm = document.getElementById('add-filter-confirm');
+
+    if (addFilterModal && addFilterName && addFilterUrl && addFilterError && addFilterCancel && addFilterConfirm) {
+        document.getElementById('add-filter-modal-title').textContent = translations.add_new_filter;
+        document.getElementById('add-filter-name-label').textContent = translations.filter_name;
+        document.getElementById('add-filter-url-label').textContent = translations.filter_url;
+        document.getElementById('add-filter-cancel-text').textContent = translations.cancel;
+        document.getElementById('add-filter-confirm-text').textContent = translations.add_new_filter;
+
+        const setModalError = (message) => {
+            if (!message) {
+                addFilterError.textContent = '';
+                addFilterError.hidden = true;
+                return;
+            }
+            addFilterError.textContent = message;
+            addFilterError.hidden = false;
+        };
+
+        const hideAddFilterModal = () => {
+            addFilterModal.hidden = true;
+            setModalError('');
+        };
+
+        const showAddFilterModal = () => {
+            addFilterName.value = '';
+            addFilterUrl.value = '';
+            setModalError('');
+            addFilterModal.hidden = false;
+            addFilterName.focus();
+        };
+
+        const normalizeAndValidateUrl = (raw) => {
+            const trimmed = raw.trim();
+            if (!trimmed) return null;
+
+            try {
+                return new URL(trimmed).toString();
+            } catch {
+                try {
+                    return new URL(`https://${trimmed}`).toString();
+                } catch {
+                    return null;
+                }
+            }
+        };
+
+        const confirmAddFilter = () => {
+            const name = addFilterName.value.trim();
+            if (!name) {
+                setModalError('Please enter a filter name.');
+                addFilterName.focus();
+                return;
+            }
+
+            const url = normalizeAndValidateUrl(addFilterUrl.value);
+            if (!url) {
+                setModalError('Please enter a valid URL.');
+                addFilterUrl.focus();
+                return;
+            }
+
+            allFilters.push({ name, url, description: 'Custom filter list', enabled: true, isDefault: false });
+            renderFilters();
+            hideAddFilterModal();
+        };
+
+        addFilterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showAddFilterModal();
+        });
+
+        addFilterCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAddFilterModal();
+        });
+
+        addFilterConfirm.addEventListener('click', (e) => {
+            e.preventDefault();
+            confirmAddFilter();
+        });
+
+        addFilterModal.addEventListener('click', (e) => {
+            if (e.target === addFilterModal) hideAddFilterModal();
+        });
+
+        const keyHandler = (e) => {
+            if (addFilterModal.hidden) return;
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hideAddFilterModal();
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAddFilter();
+            }
+        };
+
+        addFilterName.addEventListener('keydown', keyHandler);
+        addFilterUrl.addEventListener('keydown', keyHandler);
+    } else {
+        addFilterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            allFilters.push({ name: '', url: '', enabled: true, isDefault: false });
+            renderFilters();
+        });
+    }
 
     moreFiltersLink.addEventListener('click', (e) => {
         e.preventDefault();

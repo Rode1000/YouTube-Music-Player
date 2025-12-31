@@ -53,6 +53,33 @@
                     <span id="save-button-text"></span>
                 </button>
             </div>
+
+            <div id="add-filter-modal" class="modal" hidden>
+                <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-filter-modal-title">
+                    <h3 id="add-filter-modal-title" class="modal-title"></h3>
+
+                    <label class="modal-field">
+                        <span id="add-filter-name-label" class="modal-label"></span>
+                        <input id="add-filter-name" type="text" autocomplete="off" />
+                    </label>
+
+                    <label class="modal-field">
+                        <span id="add-filter-url-label" class="modal-label"></span>
+                        <input id="add-filter-url" type="text" autocomplete="off" placeholder="https://..." />
+                    </label>
+
+                    <div id="add-filter-error" class="modal-error" hidden></div>
+
+                    <div class="modal-actions">
+                        <button id="add-filter-cancel" type="button" class="secondary outline">
+                            <span id="add-filter-cancel-text"></span>
+                        </button>
+                        <button id="add-filter-confirm" type="button" class="primary">
+                            <span id="add-filter-confirm-text"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </form>
     </main>
 </body>
