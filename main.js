@@ -531,19 +531,19 @@ ipcMain.on('player-control', (event, data) => {
 
   switch (action) {
     case 'play-pause':
-      script = 'const btn = document.querySelector("#play-pause-button"); if (btn) btn.click();';
+      script = '{ const btn = document.querySelector("#play-pause-button"); if (btn) btn.click(); }';
       break;
     case 'previous':
-      script = 'const btn = document.querySelector(".previous-button"); if (btn) btn.click();';
+      script = '{ const btn = document.querySelector(".previous-button"); if (btn) btn.click(); }';
       break;
     case 'next':
-      script = 'const btn = document.querySelector(".next-button"); if (btn) btn.click();';
+      script = '{ const btn = document.querySelector(".next-button"); if (btn) btn.click(); }';
       break;
     case 'like':
-      script = 'const btn = document.querySelector("#button-shape-like > button"); if (btn) btn.click();';
+      script = '{ const btn = document.querySelector("#button-shape-like > button"); if (btn) btn.click(); }';
       break;
     case 'dislike':
-      script = 'const btn = document.querySelector("#button-shape-dislike > button"); if (btn) btn.click();';
+      script = '{ const btn = document.querySelector("#button-shape-dislike > button"); if (btn) btn.click(); }';
       break;
     case 'seek':
       if (typeof data.value !== 'undefined') {
