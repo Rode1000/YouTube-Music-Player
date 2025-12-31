@@ -66,7 +66,7 @@ A simple desktop application for **YouTube Music**.
 
 ---
  ### Notes
- **Worried about account bans due to Ghostery/adblocker / uBlock Origin core?**
+ **Worried about account bans due to Ghostery / uBlock Origin core?**
  Use a **burner account/email** or stick with **v1.4.0** that version doesn't include any uBlock Origin core or Ghostery functionality.
 Current version ![GitHub release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player?style=flat-square) with enhanced features with uBlock Origin integration.
 
@@ -81,6 +81,6 @@ This helps avoid conflicts or unexpected behavior from older versions.
 - This software is provided "as-is" without any warranties or guarantees. 
 - Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 - uBlock Origin core by [`@gorhill/ubo-core`](https://github.com/gorhill/uBlock)
-- Ghostery/adblocker by [`@ghostery/adblocker`](https://github.com/ghostery/adblocker)
+- Ghostery/adblocker by [`@ghostery`](https://github.com/ghostery/adblocker)
 
 ---
