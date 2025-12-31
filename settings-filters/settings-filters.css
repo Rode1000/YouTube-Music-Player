@@ -44,6 +44,97 @@ body {
     color: #4dabf7;
 }
 
+.status-card {
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.status-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4dabf7;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+}
+
+.status-label {
+    color: #9aa0a6;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-value {
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+#adblock-state.active {
+    color: #51cf66;
+}
+
+#adblock-state.inactive {
+    color: #ff6b6b;
+}
+
+.status-hint {
+    margin-top: 0.75rem;
+    color: #888;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.status-header button {
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.status-header button.secondary.outline {
+    background-color: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+.status-header button.secondary.outline:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
 .filter-item {
     display: inline-flex;
     justify-content: space-between;

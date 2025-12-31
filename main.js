@@ -3,7 +3,7 @@ const { app, BrowserWindow, Menu, Tray, shell, dialog, screen } = require("elect
 const { autoUpdater } = require("electron-updater");
 const path = require('path');
 const fs = require('fs').promises;
-const { initializeFilterEngine: initFiltersExternal, setupWebRequestHandler: setupWRExternal, getUserFilters: getFiltersExternal, saveUserFilters: saveFiltersExternal, resetFilters: resetFiltersExternal } = require('./adblock/filters');
+const { initializeFilterEngine: initFiltersExternal, setupWebRequestHandler: setupWRExternal, getUserFilters: getFiltersExternal, saveUserFilters: saveFiltersExternal, resetFilters: resetFiltersExternal, getAdblockStats: getAdblockStatsExternal, resetAdblockStats: resetAdblockStatsExternal } = require('./adblock/filters');
 const { injectVideoAdSkipper } = require('./adblock/videoAdSkipper');
 const { initDiscordRpc } = require('./integrations/discordRpc');
 
@@ -51,6 +51,8 @@ function ensureWindowIsVisible(bounds, defaultBounds) {
 let videoAdSkipperEnabled = false;
 let VideoAdSkipSpeed = 2;
 let VideoAdSkipInterval = 200;
+
+let adblockActive = false;
 
 // Auto continue still listening settings
 let autoContinueListeningInterval = 500;
@@ -390,16 +392,42 @@ ipcMain.handle('get-translations', (event, keys) => {
   return translations;
 });
 
+ipcMain.handle('get-adblock-stats', async () => {
+  if (typeof getAdblockStatsExternal !== 'function') {
+    return {
+      active: adblockActive,
+      engineReady: false,
+      enabledLists: 0,
+      checked: 0,
+      blocked: 0,
+      lastBlockedAt: 0
+    };
+  }
+
+  const stats = await getAdblockStatsExternal();
+  return { active: adblockActive, ...stats };
+});
+
+ipcMain.on('reset-adblock-stats', () => {
+  if (typeof resetAdblockStatsExternal === 'function') {
+    resetAdblockStatsExternal();
+  }
+});
+
 ipcMain.on('save-filters', async (event, newFilters) => {
   await saveFiltersExternal(newFilters);
-  await initFiltersExternal(true);
+  const success = await initFiltersExternal(true);
+  adblockActive = !!success;
+  if (success) setupWRExternal();
 });
 
 ipcMain.on('reset-filters', async (event) => {
   try {
     await resetFiltersExternal();
     console.log('User filters reset to default successfully.');
-    await initFiltersExternal(true);
+    const success = await initFiltersExternal(true);
+    adblockActive = !!success;
+    if (success) setupWRExternal();
   } catch (error) {
     console.log('Error resetting user filters:', error.message);
   }
@@ -941,6 +969,7 @@ async function createWindow() {
 
   // Load filters in background
   initFiltersExternal().then((success) => {
+    adblockActive = !!success;
     console.log(success ? 'Ad blocking active' : 'Ad blocking failed');
     if (success) {
       setupWRExternal();

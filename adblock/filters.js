@@ -6,19 +6,31 @@ const fs = require('fs').promises;
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 let snfe;
+let webRequestHandlerRegistered = false;
+
+const adblockStats = {
+  checked: 0,
+  blocked: 0,
+  lastBlockedAt: 0
+};
+
+function resetAdblockStats() {
+  adblockStats.checked = 0;
+  adblockStats.blocked = 0;
+  adblockStats.lastBlockedAt = 0;
+}
 
 const CACHE_DIR = path.join(app.getPath('userData'), 'ytmp-filters');
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 const USER_FILTERS_FILE = path.join(app.getPath('userData'), 'user-filters.json');
 
 const defaultFilterLists = [
-  { name: 'easylist', url: 'https://easylist.to/easylist/easylist.txt', description: 'EasyList (Ad blocking)', enabled: false },
-  { name: 'easyprivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', description: 'EasyPrivacy (Privacy protection)', enabled: false },
-  { name: 'ublock-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt', description: 'uBlock filters (Enhanced ad blocking)', enabled: false },
-  { name: 'ublock-privacy', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt', description: 'uBlock Privacy filters', enabled: false },
-  { name: 'ublock-badware', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt', description: 'uBlock Badware protection', enabled: false },
-  { name: 'ublock-unbreak', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/unbreak.txt', description: 'unbreak sites broken as a result of 3rd-party filter lists.', enabled: false },
-  { name: 'ublock-Lite-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/ubol-filters.txt', description: 'Filters optimized for uBO Lite', enabled: false }
+  { name: 'easylist', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/heads/master/thirdparties/easylist/easylist.txt', description: 'EasyList (Ad blocking)', enabled: false },
+  { name: 'ublock-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/heads/master/filters/filters.txt', description: 'uBlock filters (Enhanced ad blocking)', enabled: false },
+  { name: 'General filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/heads/master/filters/filters-general.txt', description: 'General filters (Popular revolving adservers)', enabled: false },
+  { name: 'ublock-Lite-filters', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/heads/master/filters/ubol-filters.txt', description: 'Filters optimized for uBO Lite', enabled: false },
+  { name: 'ublock-unbreak', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/heads/master/filters/unbreak.txt', description: 'unbreak sites broken as a result of 3rd-party filter lists.', enabled: false },
+  { name: 'ublock-privacy', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/heads/master/filters/privacy.txt', description: 'uBlock Privacy filters', enabled: false }
 ];
 
 async function ensureCacheDir() {
@@ -102,15 +114,24 @@ async function initializeFilterEngine(forceUpdate = false) {
 
 function setupWebRequestHandler() {
   if (!snfe) return;
+  if (webRequestHandlerRegistered) return;
+
+  webRequestHandlerRegistered = true;
+
   const blockableResourceTypes = {
     script: true, stylesheet: false, image: true, font: false, xhr: true, fetch: true,
-    websocket: false, media: false, object: true, ping: true, csp_report: true,
+    websocket: false, media: true, object: true, ping: true, csp_report: true,
     preflight: false, navigation: false, sub_frame: true
   };
+
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     if (!snfe) return callback({});
+
     const shouldCheck = blockableResourceTypes[details.resourceType];
     if (!shouldCheck) return callback({});
+
+    adblockStats.checked += 1;
+
     const map = {
       script: 'script', stylesheet: 'stylesheet', image: 'image', font: 'font',
       xhr: 'xmlhttprequest', fetch: 'fetch', websocket: 'websocket',
@@ -118,9 +139,34 @@ function setupWebRequestHandler() {
     };
     const type = map[details.resourceType] || 'other';
     const shouldBlock = snfe.matchRequest({ originURL: details.referrer || details.url, url: details.url, type });
-    if (shouldBlock !== 0) return callback({ cancel: true });
+
+    if (shouldBlock !== 0) {
+      adblockStats.blocked += 1;
+      adblockStats.lastBlockedAt = Date.now();
+      return callback({ cancel: true });
+    }
+
     callback({});
   });
 }
 
-module.exports = { initializeFilterEngine, setupWebRequestHandler, getUserFilters: loadUserFilters, saveUserFilters, resetFilters };
+async function getAdblockStats() {
+  let enabledLists = 0;
+
+  try {
+    const all = await loadUserFilters();
+    enabledLists = Array.isArray(all) ? all.filter(f => f && f.enabled).length : 0;
+  } catch {
+    enabledLists = 0;
+  }
+
+  return {
+    engineReady: !!snfe,
+    enabledLists,
+    checked: adblockStats.checked,
+    blocked: adblockStats.blocked,
+    lastBlockedAt: adblockStats.lastBlockedAt
+  };
+}
+
+module.exports = { initializeFilterEngine, setupWebRequestHandler, getUserFilters: loadUserFilters, saveUserFilters, resetFilters, getAdblockStats, resetAdblockStats };

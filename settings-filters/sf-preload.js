@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openExternal: (url) => ipcRenderer.send('open-external-link', url),
   getAdSkipperSettings: () => ipcRenderer.invoke('get-ad-skipper-settings'),
   saveAdSkipperSettings: (settings) => ipcRenderer.send('save-ad-skipper-settings', settings),
+  getAdblockStats: () => ipcRenderer.invoke('get-adblock-stats'),
+  resetAdblockStats: () => ipcRenderer.send('reset-adblock-stats'),
   getTranslations: () => ipcRenderer.invoke('get-translations', [
       'ad_filter_config_title',
       'enabled',

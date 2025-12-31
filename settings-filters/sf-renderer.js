@@ -16,6 +16,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cancel-button-text').textContent = translations.cancel;
     document.getElementById('reset-button-text').textContent = translations.reset;
 
+    const adblockStateEl = document.getElementById('adblock-state');
+    const adblockEnabledListsEl = document.getElementById('adblock-enabled-lists');
+    const adblockCheckedEl = document.getElementById('adblock-checked');
+    const adblockBlockedEl = document.getElementById('adblock-blocked');
+    const adblockHintEl = document.getElementById('adblock-hint');
+    const resetAdblockStatsBtn = document.getElementById('reset-adblock-stats');
+
+    const updateAdblockStatus = async () => {
+        if (!window.electronAPI.getAdblockStats) return;
+        if (!adblockStateEl || !adblockEnabledListsEl || !adblockCheckedEl || !adblockBlockedEl) return;
+
+        try {
+            const stats = await window.electronAPI.getAdblockStats();
+            const isActive = !!stats.active;
+
+            adblockStateEl.textContent = isActive ? 'Active' : 'Inactive';
+            adblockStateEl.classList.toggle('active', isActive);
+            adblockStateEl.classList.toggle('inactive', !isActive);
+
+            adblockEnabledListsEl.textContent = (stats.enabledLists ?? 0).toLocaleString();
+            adblockCheckedEl.textContent = (stats.checked ?? 0).toLocaleString();
+            adblockBlockedEl.textContent = (stats.blocked ?? 0).toLocaleString();
+
+            if (adblockHintEl) {
+                if ((stats.enabledLists ?? 0) === 0) {
+                    adblockHintEl.textContent = 'No filter lists enabled. Enable at least one list and press Save.';
+                } else if (!isActive) {
+                    adblockHintEl.textContent = 'Filters are enabled but not active yet. Try toggling a list and pressing Save, or restart the app.';
+                } else if ((stats.checked ?? 0) === 0) {
+                    adblockHintEl.textContent = 'Active. Counters will increase as requests are made.';
+                } else if ((stats.blocked ?? 0) === 0) {
+                    adblockHintEl.textContent = 'Active, but nothing has been blocked yet.';
+                } else {
+                    adblockHintEl.textContent = 'Active and blocking requests.';
+                }
+            }
+        } catch {
+            if (adblockHintEl) adblockHintEl.textContent = 'Unable to read adblock status.';
+        }
+    };
+
+    if (resetAdblockStatsBtn && window.electronAPI.resetAdblockStats) {
+        resetAdblockStatsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.electronAPI.resetAdblockStats();
+            updateAdblockStatus();
+        });
+    }
+
+    updateAdblockStatus();
+    setInterval(updateAdblockStatus, 1000);
+
     let allFilters = [];
 
     //load ad skipper settings
