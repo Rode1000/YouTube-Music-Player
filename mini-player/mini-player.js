@@ -137,7 +137,8 @@ window.electronAPI.onStateUpdate((state) => {
         }
 
         if (src) {
-            document.body.style.setProperty('--bg-image', `url("${src.replace(/"/g, '\\"')}")`);
+            const bSrc = encodeURI(src);
+            document.body.style.setProperty('--bg-image', `url("${bSrc}")`);
         } else {
             document.body.style.setProperty('--bg-image', 'none');
         }
