@@ -1,6 +1,6 @@
 const rpc = require("discord-rpc");
 
-const clientId = process.env.YTMP_DISCORD_CLIENT_ID;
+const clientId = process.env.YTMP_DISCORD_CLIENT_ID || "1332344236015878314";
 let client = null;
 let isConnected = false;
 let presenceUpdateInterval;
