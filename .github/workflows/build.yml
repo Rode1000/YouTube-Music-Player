@@ -1,10 +1,7 @@
 name: Build
 
 on:
-  push:
-    branches: [ better, better-dev ]
-  pull_request:
-    branches: [ better ]
+  workflow_dispatch:
 
 jobs:
   build:
