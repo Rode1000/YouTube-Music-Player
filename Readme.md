@@ -2,7 +2,7 @@
 
 A simple desktop application for **YouTube Music**.
 
-[![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![MacOS Available](https://img.shields.io/badge/MacOs-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub Release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release Downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![License](https://img.shields.io/github/license/nubsuki/YouTube-Music-Player)](LICENSE) [![Stars](https://img.shields.io/github/stars/nubsuki/YouTube-Music-Player?style=social)](https://github.com/nubsuki/YouTube-Music-Player) [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow?logo=buymeacoffee)](https://buymeacoffee.com/nubsuki)
+[![Windows Available](https://img.shields.io/badge/Windows-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![Linux Available](https://img.shields.io/badge/Linux-Available-brightgreen)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub Release](https://img.shields.io/github/v/release/nubsuki/YouTube-Music-Player)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![GitHub release Downloads](https://img.shields.io/github/downloads/nubsuki/YouTube-Music-Player/total)](https://github.com/nubsuki/YouTube-Music-Player/releases) [![License](https://img.shields.io/github/license/nubsuki/YouTube-Music-Player)](LICENSE) [![Stars](https://img.shields.io/github/stars/nubsuki/YouTube-Music-Player?style=social)](https://github.com/nubsuki/YouTube-Music-Player) [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow?logo=buymeacoffee)](https://buymeacoffee.com/nubsuki)
 
 ---
 **YouTube Music Player**
@@ -62,10 +62,6 @@ A simple desktop application for **YouTube Music**.
 - Make sure fuse is installed
 - Download the AppImage or deb package from releases
 
-### MacOS
-
-- Download the dmg file from releases
-- Not being tested due to not having hardware to run the app, build using GitHub Actions.
 
 ---
  ### Notes
