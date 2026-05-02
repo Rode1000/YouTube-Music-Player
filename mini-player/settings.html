@@ -17,6 +17,8 @@
             padding: 12px;
             background-color: var(--bg-color);
             color: var(--text-color);
+            overflow: hidden;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         button,
@@ -34,19 +36,22 @@
             font-size: 13px;
             font-weight: 600;
             opacity: 0.95;
+            color: var(--text-color);
         }
 
         .section {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 10px;
+            box-shadow: 0 1px 3px var(--shadow-color);
         }
 
         .label {
             font-size: 11px;
             opacity: 0.75;
             margin-bottom: 8px;
+            color: var(--text-color);
         }
 
         .options {
@@ -63,15 +68,20 @@
             width: 100%;
             padding: 10px;
             border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            background: rgba(255, 255, 255, 0.06);
-            color: inherit;
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            color: var(--text-color);
             cursor: pointer;
-            transition: transform 0.12s ease, border-color 0.12s ease;
+            transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
         }
 
         .option-btn:active {
             transform: scale(0.98);
+        }
+
+        .option-btn:hover {
+            border-color: var(--text-color);
+            opacity: 0.9;
         }
 
         .option-btn.active {
@@ -83,15 +93,24 @@
             height: 22px;
             border-radius: 7px;
             flex: 0 0 auto;
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid var(--border-color);
         }
 
-        .swatch.midnight {
-            background: #000000;
+        .swatch.dark {
+            background: #1a1a1a;
+        }
+
+        .swatch.light {
+            background: #ffffff;
+            border: 1px solid #ccc;
         }
 
         .swatch.blur {
-            background: rgba(255, 255, 255, 0.16);
+            background: linear-gradient(135deg, #2c3e50, #000);
+        }
+
+        .swatch.custom {
+            background: linear-gradient(135deg, var(--custom-text-color), var(--custom-emphasis-color), var(--custom-bg-color));
         }
 
         .row {
@@ -104,6 +123,7 @@
         .row-label {
             font-size: 12px;
             opacity: 0.9;
+            color: var(--text-color);
         }
 
         .switch {
@@ -122,8 +142,8 @@
         .slider {
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
             border-radius: 999px;
             transition: background 0.15s ease;
         }
@@ -136,35 +156,46 @@
             left: 3px;
             top: 2px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--knob-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             transition: transform 0.15s ease;
         }
 
-        .switch input:checked + .slider {
-            background: rgba(255, 88, 88, 0.45);
-            border-color: rgba(255, 88, 88, 0.55);
+        .switch input:checked+.slider {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            opacity: 0.8;
         }
 
-        .switch input:checked + .slider:before {
+        .switch input:checked+.slider:before {
             transform: translateX(20px);
         }
     </style>
 </head>
 
-<body class="midnight">
+<body>
     <div class="panel">
         <div class="title" id="theme-title">Mini player settings</div>
 
         <div class="section">
             <div class="label" data-i18n="theme">Theme</div>
             <div class="options" id="theme-options">
-                <button type="button" class="option-btn" data-theme="midnight">
-                    <span class="swatch midnight"></span>
-                    <span data-i18n="theme_midnight">Midnight</span>
+                <button type="button" class="option-btn" data-theme="dark">
+                    <span class="swatch dark"></span>
+                    <span data-i18n="theme_dark">Dark</span>
                 </button>
                 <button type="button" class="option-btn" data-theme="blur">
                     <span class="swatch blur"></span>
                     <span data-i18n="theme_blur">Blur</span>
+                </button>
+                <button type="button" class="option-btn" data-theme="light">
+                    <span class="swatch light"></span>
+                    <span data-i18n="theme_light">Light</span>
+                </button>
+                <button type="button" class="option-btn" data-theme="custom">
+                    <span class="swatch custom"></span>
+                    <span data-i18n="theme_custom">Custom</span>
                 </button>
             </div>
         </div>

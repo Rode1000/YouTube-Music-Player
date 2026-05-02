@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+    <title>Custom Theme Editor</title>
+    <link rel="stylesheet" href="mini-player.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            height: auto;
+            border-radius: 0;
+            padding: 12px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-y: auto;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .section {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .label {
+            font-size: 11px;
+            opacity: 0.75;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .color-code {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--surface-color);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--knob-color);
+        }
+
+        .value-display {
+            font-size: 11px;
+            min-width: 30px;
+            text-align: right;
+            opacity: 0.8;
+        }
+
+        button.reset {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 12px;
+            transition: opacity 0.2s;
+        }
+
+        button.reset:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body class="custom">
+    <div class="panel">
+        <div class="section">
+            <div class="control-group">
+                <div class="label" data-i18n="bg_color">Background Color</div>
+                <div class="row">
+                    <input type="color" id="bg-color">
+                    <span class="color-code" id="bg-color-hex">#000000</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="label" data-i18n="text_color">Text Color</div>
+                <div class="row">
+                    <input type="color" id="text-color">
+                    <span class="color-code" id="text-color-hex">#EEEEEE</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="label" data-i18n="emphasis_color">Emphasis Color</div>
+                <div class="row">
+                    <input type="color" id="emphasis-color">
+                    <span class="color-code" id="emphasis-color-hex">#FF5858</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="control-group">
+                <div class="label" data-i18n="blur_opacity">Blur Opacity</div>
+                <div class="row">
+                    <input type="range" id="blur-opacity" min="0" max="1" step="0.01">
+                    <span class="value-display" id="blur-opacity-val">0.28</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="label" data-i18n="background_opacity">Background Opacity</div>
+                <div class="row">
+                    <input type="range" id="bg-opacity" min="0" max="1" step="0.01">
+                    <span class="value-display" id="bg-opacity-val">0.55</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="label" data-i18n="blur_strength">Blur Strength</div>
+                <div class="row">
+                    <input type="range" id="blur-strength" min="0" max="40" step="1">
+                    <span class="value-display" id="blur-val">14px</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="reset" id="reset-btn" data-i18n="reset">Reset to defaults</button>
+    </div>
+
+    <script src="custom-theme.js"></script>
+</body>
+
+</html>

@@ -16,6 +16,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cancel-button-text').textContent = translations.cancel;
     document.getElementById('reset-button-text').textContent = translations.reset;
 
+    // Translate adblock status section
+    document.getElementById('filter-list-title').textContent = translations.filter_list;
+    document.getElementById('adblock-status-title').textContent = translations.adblock_status;
+    document.getElementById('reset-counters-text').textContent = translations.reset_counters;
+    document.getElementById('status-state-label').textContent = translations.status_state;
+    document.getElementById('status-enabled-lists-label').textContent = translations.status_enabled_lists;
+    document.getElementById('status-checked-label').textContent = translations.status_checked;
+    document.getElementById('status-blocked-label').textContent = translations.status_blocked;
+
+    // Translate ad skipper section
+    document.getElementById('simple-skipper-label').textContent = translations.simple_skipper;
+    document.getElementById('simple-skipper-desc').textContent = translations.simple_skipper_desc;
+
     const adblockStateEl = document.getElementById('adblock-state');
     const adblockEnabledListsEl = document.getElementById('adblock-enabled-lists');
     const adblockCheckedEl = document.getElementById('adblock-checked');
@@ -31,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const stats = await window.electronAPI.getAdblockStats();
             const isActive = !!stats.active;
 
-            adblockStateEl.textContent = isActive ? 'Active' : 'Inactive';
+            adblockStateEl.textContent = isActive ? translations.adblock_active : translations.adblock_inactive;
             adblockStateEl.classList.toggle('active', isActive);
             adblockStateEl.classList.toggle('inactive', !isActive);
 
@@ -41,15 +54,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (adblockHintEl) {
                 if ((stats.enabledLists ?? 0) === 0) {
-                    adblockHintEl.textContent = 'No filter lists enabled. Enable at least one list and press Save.';
+                    adblockHintEl.textContent = translations.adblock_no_lists;
                 } else if (!isActive) {
-                    adblockHintEl.textContent = 'Filters are enabled but not active yet. Try toggling a list and pressing Save, or restart the app.';
+                    adblockHintEl.textContent = translations.adblock_not_active;
                 } else if ((stats.checked ?? 0) === 0) {
-                    adblockHintEl.textContent = 'Active. Counters will increase as requests are made.';
+                    adblockHintEl.textContent = translations.adblock_waiting;
                 } else if ((stats.blocked ?? 0) === 0) {
-                    adblockHintEl.textContent = 'Active, but nothing has been blocked yet.';
+                    adblockHintEl.textContent = translations.adblock_nothing_blocked;
                 } else {
-                    adblockHintEl.textContent = 'Active and blocking requests.';
+                    adblockHintEl.textContent = translations.adblock_blocking;
                 }
             }
         } catch {
@@ -214,14 +227,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const confirmAddFilter = () => {
             const name = addFilterName.value.trim();
             if (!name) {
-                setModalError('Please enter a filter name.');
+                setModalError(translations.error_filter_name_empty);
                 addFilterName.focus();
                 return;
             }
 
             const url = normalizeAndValidateUrl(addFilterUrl.value);
             if (!url) {
-                setModalError('Please enter a valid URL.');
+                setModalError(translations.error_filter_url_invalid);
                 addFilterUrl.focus();
                 return;
             }

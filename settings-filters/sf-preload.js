@@ -20,6 +20,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'save',
       'cancel',
       'delete',
-      'reset'
+      'reset',
+      'filter_list',
+      'adblock_status',
+      'reset_counters',
+      'status_state',
+      'status_enabled_lists',
+      'status_checked',
+      'status_blocked',
+      'simple_skipper',
+      'simple_skipper_desc',
+      'adblock_active',
+      'adblock_inactive',
+      'adblock_no_lists',
+      'adblock_not_active',
+      'adblock_waiting',
+      'adblock_nothing_blocked',
+      'adblock_blocking',
+      'error_filter_name_empty',
+      'error_filter_url_invalid'
   ])
 });
