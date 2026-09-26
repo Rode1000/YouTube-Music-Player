@@ -9,5 +9,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAlwaysOnTop: () => ipcRenderer.invoke('get-mini-player-always-on-top'),
   setAlwaysOnTop: (enabled) => ipcRenderer.send('set-mini-player-always-on-top', enabled),
   openSettings: () => ipcRenderer.send('open-mini-player-settings'),
-  onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (event, theme) => callback(theme))
+  onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (event, theme) => callback(theme)),
+  resizeWindow: (width, height) => ipcRenderer.send('resize-window', width, height),
+  openCustomThemeEditor: () => ipcRenderer.send('open-custom-theme-editor'),
+  getCustomTheme: () => ipcRenderer.invoke('get-mini-player-custom-theme'),
+  setCustomTheme: (theme) => ipcRenderer.send('set-mini-player-custom-theme', theme),
+  onCustomThemeUpdated: (callback) => ipcRenderer.on('custom-theme-updated', (event, theme) => callback(theme))
 });

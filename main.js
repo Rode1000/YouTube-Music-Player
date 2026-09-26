@@ -37,6 +37,14 @@ let miniPlayerBounds = { x: undefined, y: undefined, width: 320, height: 105 };
 let mainWindowBounds = { x: undefined, y: undefined, width: 1200, height: 800 };
 let miniPlayerTheme = "blur";
 let miniPlayerAlwaysOnTop = true;
+let miniPlayerCustomTheme = {
+  "bg-color": "#000000",
+  "text-color": "#eeeeee",
+  "emphasis-color": "#ff5858",
+  "blur-opacity": 0.28,
+  "bg-opacity": 0.55,
+  "blur-strength": 14
+};
 
 function ensureWindowIsVisible(bounds, defaultBounds) {
   if (bounds.x === undefined || bounds.y === undefined) return defaultBounds;
@@ -137,6 +145,14 @@ async function loadConfig() {
       config.miniPlayerAlwaysOnTop !== undefined
         ? !!config.miniPlayerAlwaysOnTop
         : true;
+    miniPlayerCustomTheme = config.miniPlayerCustomTheme || {
+      "bg-color": "#000000",
+      "text-color": "#eeeeee",
+      "emphasis-color": "#ff5858",
+      "blur-opacity": 0.28,
+      "bg-opacity": 0.55,
+      "blur-strength": 14,
+    };
 
     console.log(
       `Config loaded - Minimize to tray: ${minimizeToTray}, Video ad skipper: ${videoAdSkipperEnabled}, Video ad skip speed: ${VideoAdSkipSpeed}, Last URL: ${lastUrl}, Open last song: ${openLastSong}, Resume playback: ${resumePlayback}, Mini-player bounds: ${JSON.stringify(miniPlayerBounds)}, Main window bounds: ${JSON.stringify(mainWindowBounds)}, Mini-player theme: ${miniPlayerTheme}`,
@@ -162,6 +178,7 @@ async function saveConfig() {
       mainWindowBounds: mainWindowBounds,
       miniPlayerTheme: miniPlayerTheme,
       miniPlayerAlwaysOnTop: miniPlayerAlwaysOnTop,
+      miniPlayerCustomTheme: miniPlayerCustomTheme,
     };
 
     await fs.mkdir(path.dirname(CONFIG_FILE), { recursive: true });
@@ -311,6 +328,7 @@ function createMiniPlayerWindow() {
 
   miniPlayerWindow.once("ready-to-show", () => {
     miniPlayerWindow.show();
+    miniPlayerWindow.setAlwaysOnTop(miniPlayerAlwaysOnTop, "screen-saver");
   });
 
   // Enable F12 and Ctrl+Shift+i for DevTools
@@ -584,9 +602,11 @@ ipcMain.on("set-mini-player-theme", (event, theme) => {
   console.log(`Mini player theme updated to: ${theme}`);
 
   // Notify all windows of theme change
-  if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
-    miniPlayerWindow.webContents.send("theme-changed", theme);
-  }
+  [miniPlayerWindow, miniPlayerSettingsWindow].forEach(win => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("theme-changed", theme);
+    }
+  });
 });
 
 ipcMain.handle("get-mini-player-always-on-top", () => {
@@ -598,8 +618,78 @@ ipcMain.on("set-mini-player-always-on-top", (event, enabled) => {
   saveConfig();
 
   if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
-    miniPlayerWindow.setAlwaysOnTop(miniPlayerAlwaysOnTop);
+    miniPlayerWindow.setAlwaysOnTop(miniPlayerAlwaysOnTop, "screen-saver");
+    miniPlayerWindow.setSkipTaskbar(miniPlayerAlwaysOnTop);
   }
+});
+
+ipcMain.on("resize-window", (event, width, height) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && !win.isDestroyed()) {
+    win.setContentSize(width, height, true);
+    win.center();
+  }
+});
+
+let customThemeWindow;
+function createCustomThemeWindow() {
+  if (customThemeWindow) {
+    customThemeWindow.focus();
+    return;
+  }
+
+  const parentWindow = (miniPlayerSettingsWindow && !miniPlayerSettingsWindow.isDestroyed())
+    ? miniPlayerSettingsWindow
+    : ((miniPlayerWindow && !miniPlayerWindow.isDestroyed()) ? miniPlayerWindow : undefined);
+
+  customThemeWindow = new BrowserWindow({
+    width: 250,
+    height: 400,
+    parent: parentWindow,
+    modal: !!parentWindow,
+    frame: true,
+    resizable: false,
+    minimizable: false,
+    show: false,
+    title: t("custom_theme"),
+    webPreferences: {
+      preload: path.join(__dirname, "mini-player/preload-mini-player.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    icon: iconPath
+  });
+
+  customThemeWindow.setMenu(null);
+  customThemeWindow.loadFile(path.join(__dirname, "mini-player/custom-theme.html"));
+
+  customThemeWindow.once("ready-to-show", () => {
+    customThemeWindow.show();
+  });
+
+  customThemeWindow.on("closed", () => {
+    customThemeWindow = null;
+  });
+}
+
+ipcMain.on("open-custom-theme-editor", () => {
+  createCustomThemeWindow();
+});
+
+ipcMain.handle("get-mini-player-custom-theme", () => {
+  return miniPlayerCustomTheme;
+});
+
+ipcMain.on("set-mini-player-custom-theme", (event, theme) => {
+  miniPlayerCustomTheme = theme;
+  saveConfig();
+
+  // Notify all windows of custom theme update
+  [miniPlayerWindow, miniPlayerSettingsWindow, customThemeWindow].forEach(win => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("custom-theme-updated", theme);
+    }
+  });
 });
 
 ipcMain.on("resize-about-window", (event, width, height) => {
