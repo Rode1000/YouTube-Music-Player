@@ -14,5 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openCustomThemeEditor: () => ipcRenderer.send('open-custom-theme-editor'),
   getCustomTheme: () => ipcRenderer.invoke('get-mini-player-custom-theme'),
   setCustomTheme: (theme) => ipcRenderer.send('set-mini-player-custom-theme', theme),
-  onCustomThemeUpdated: (callback) => ipcRenderer.on('custom-theme-updated', (event, theme) => callback(theme))
+  onCustomThemeUpdated: (callback) => ipcRenderer.on('custom-theme-updated', (event, theme) => callback(theme)),
+  dragStart: (offset) => ipcRenderer.send('window-drag-start', offset),
+  dragStop: () => ipcRenderer.send('window-drag-stop')
 });

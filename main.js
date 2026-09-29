@@ -342,13 +342,16 @@ function createMiniPlayerWindow() {
     }
   });
 
+  let moveTimeout = null;
   const saveMiniPlayerPosition = () => {
-    if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
-      const bounds = miniPlayerWindow.getBounds();
-      // Keep width and height out of the saved config to avoid growth on Windows DPI scaling
-      miniPlayerBounds = { x: bounds.x, y: bounds.y };
-      saveConfig();
-    }
+    if (moveTimeout) clearTimeout(moveTimeout);
+    moveTimeout = setTimeout(() => {
+      if (miniPlayerWindow && !miniPlayerWindow.isDestroyed()) {
+        const bounds = miniPlayerWindow.getBounds();
+        miniPlayerBounds = { x: bounds.x, y: bounds.y };
+        saveConfig();
+      }
+    }, 500);
   };
 
   miniPlayerWindow.on("move", saveMiniPlayerPosition);
@@ -452,6 +455,54 @@ function startMiniPlayerStatePolling() {
 }
 
 const { ipcMain } = require("electron");
+
+let dragInterval = null;
+let startCursor = null;
+let startBounds = null;
+let lastCursor = null;
+
+ipcMain.on('window-drag-start', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return;
+  
+  if (dragInterval) clearInterval(dragInterval);
+  
+  startCursor = screen.getCursorScreenPoint();
+  startBounds = win.getBounds();
+  lastCursor = { x: startCursor.x, y: startCursor.y };
+  
+  dragInterval = setInterval(() => {
+    try {
+      const currentCursor = screen.getCursorScreenPoint();
+      
+      if (currentCursor.x === lastCursor.x && currentCursor.y === lastCursor.y) {
+        return; 
+      }
+      
+      lastCursor = { ...currentCursor };
+      
+      const deltaX = currentCursor.x - startCursor.x;
+      const deltaY = currentCursor.y - startCursor.y;
+      
+      win.setBounds({
+        x: startBounds.x + deltaX,
+        y: startBounds.y + deltaY,
+        width: startBounds.width,
+        height: startBounds.height
+      });
+      
+    } catch (e) {
+      console.error("Error arrastrando la ventana:", e);
+    }
+  }, 15);
+});
+
+ipcMain.on('window-drag-stop', () => {
+  if (dragInterval) {
+    clearInterval(dragInterval);
+    dragInterval = null;
+  }
+});
 
 ipcMain.handle("get-filters", async () => {
   return await getFiltersExternal();

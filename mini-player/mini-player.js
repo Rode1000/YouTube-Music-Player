@@ -205,3 +205,24 @@ window.electronAPI.onStateUpdate((state) => {
     // Update buffering state
     bufferingEl.classList.toggle('hidden', !state.isBuffering);
 });
+
+document.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button, input, #progress-bar-container, .control-btn, svg, path, img')) {
+        return;
+    }
+    
+    if (e.button === 0) {
+        window.electronAPI.dragStart({ 
+            offsetX: e.clientX, 
+            offsetY: e.clientY 
+        });
+    }
+});
+
+window.addEventListener('mouseup', () => {
+    window.electronAPI.dragStop();
+});
+
+window.addEventListener('mouseleave', () => {
+    window.electronAPI.dragStop();
+});
